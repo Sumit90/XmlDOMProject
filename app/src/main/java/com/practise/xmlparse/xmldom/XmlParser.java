@@ -14,12 +14,14 @@ import javax.xml.parsers.ParserConfigurationException;
 /**
  * Created by e00959 on 2/6/2015.
  */
+
+//The class will be used to parse the provided input stream of Xml file
 public class XmlParser {
 
     private DocumentBuilderFactory documentBuilderFactory;
     private DocumentBuilder documentBuilder;
     private Document document;
-
+//--------------------------------------------------------------------------------------------------
     public XmlParser(InputStream is) throws ParserConfigurationException,SAXException,IOException
     {
         documentBuilderFactory=DocumentBuilderFactory.newInstance();
@@ -27,12 +29,12 @@ public class XmlParser {
         document =documentBuilder.parse(is);
 
     }
-
+//--------------------------------------------------------------------------------------------------
     public Element parseRootElement()
     {
         Element element=document.getDocumentElement();
         return element;
     }
 
-
+//--------------------------------------------------------------------------------------------------
 }

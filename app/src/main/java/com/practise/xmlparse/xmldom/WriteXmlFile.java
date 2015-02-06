@@ -28,7 +28,7 @@ public class WriteXmlFile {
     private DocumentBuilder documentBuilder;
     private Document document;
     private Element docRootElement;
-
+//--------------------------------------------------------------------------------------------------
     //Parameterised constructor to set and get ParameterList object
     public WriteXmlFile(ParametersList parametersList) throws ParserConfigurationException
     {
@@ -37,7 +37,7 @@ public class WriteXmlFile {
         documentBuilder=documentBuilderFactory.newDocumentBuilder();
         document=documentBuilder.newDocument();
     }
-
+//--------------------------------------------------------------------------------------------------
     public void writeXml() throws ParserConfigurationException
     {
         System.out.print("-----hello inside writeXml()----------");
@@ -64,7 +64,8 @@ public class WriteXmlFile {
 
     }
 
-
+//--------------------------------------------------------------------------------------------------
+    // This function is write the root element of the XML file and its attributes
     private boolean writeRootElement() throws ParserConfigurationException
     {
         try {
@@ -100,7 +101,7 @@ public class WriteXmlFile {
 
             return true;
     }
-
+//--------------------------------------------------------------------------------------------------
     //This function will create an attribute and will append it to the element passed
     private void createAttribute(String attributeName,String attributeValue,Element element)
     {
@@ -109,5 +110,5 @@ public class WriteXmlFile {
         element.setAttributeNode(rootElementAttribute);
     }
 
-
+//--------------------------------------------------------------------------------------------------
 }

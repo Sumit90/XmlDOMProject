@@ -60,6 +60,7 @@ public class MainActivity extends ActionBarActivity {
                     addInitialRootParameters("fastLogcodes;version",0);
                     addInitialRootParameters("fastLogcodes;name",0);
                     addInitialRootParameters("fastLogcodes;name1",0);
+                    addInitialRootParameters("fastLogcodes;name2",0);
 
                     printRootList(initialParameterList.getRootParameterList());
 
@@ -108,12 +109,14 @@ public class MainActivity extends ActionBarActivity {
             }
         });
     }
-
+//--------------------------------------------------------------------------------------------------
     //This function is used to add Initial Root attributes to be used for comparing and extracting
         void addInitialRootParameters(String attributeName,int mode)
         {
             initialParameterList.addInitialRootParameter(new RootElementPOJO(attributeName,mode));
         }
+//--------------------------------------------------------------------------------------------------
+
 
     //This function will add root attributes to root parameter list after comparing it with initial list
         void addRootParameters(ParametersList paramList,Element rootElement)
@@ -176,7 +179,7 @@ public class MainActivity extends ActionBarActivity {
 
         }
 
-
+//--------------------------------------------------------------------------------------------------
    private void printRootList(List<RootElementPOJO> list)
    {
 
@@ -192,7 +195,7 @@ public class MainActivity extends ActionBarActivity {
        Log.d(TAG,"--------inside printRootList End-----------");
    }
 
-
+//--------------------------------------------------------------------------------------------------
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
