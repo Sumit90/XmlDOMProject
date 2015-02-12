@@ -68,7 +68,7 @@ public class WriteXmlFile {
     // This function is write the root element of the XML file and its attributes
     private boolean writeRootElement() throws ParserConfigurationException
     {
-        try {
+
             int counter = 0;
             List<RootElementPOJO> rootElementPOJOList = parametersList.getRootParameterList();
 
@@ -92,12 +92,7 @@ public class WriteXmlFile {
                 }
 
             }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            return false;
-        }
+
 
             return true;
     }

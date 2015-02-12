@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><fastLogcodes version="1.35.1" name="myexample" name1="ABCD">
+<?xml version="1.0" encoding="UTF-8"?><fastLogcodes version="1.35.1" name="SdCard" name1="Sdcard">
    <LTE>
       <Lte_logcode>
          <name>0xB173</name>

@@ -29,4 +29,10 @@ public interface ComparisonConstants {
     //constant telling type of element is Inner element
     public static final int INNER_ELEMENT=6;
 
+    public static final int PUSH_XML =7;
+    public static final int PUSH_XML_NOT =8;
+
+    public static final int ASSET_FILE=9;
+    public static final int SDCARD_FILE=10;
+
 }

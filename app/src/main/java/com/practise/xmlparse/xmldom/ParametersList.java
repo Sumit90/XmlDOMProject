@@ -32,6 +32,13 @@ public class ParametersList {
         return rootAttributes;
     }
 //--------------------------------------------------------------------------------------------------
+
+    public void setRootParameterList(List<RootElementPOJO> rootParameterList)
+    {
+        rootAttributes=rootParameterList;
+    }
+
+//--------------------------------------------------------------------------------------------------
    /* public RootElementPOJO getRootParameter(String rootElementName)
     {
         RootElementPOJO elementPOJO=null;

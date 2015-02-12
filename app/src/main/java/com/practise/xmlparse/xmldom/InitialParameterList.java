@@ -18,7 +18,7 @@ public class InitialParameterList {
 
     }
 //--------------------------------------------------------------------------------------------------
-    public void addInitialRootParameter(RootElementPOJO rootElement)
+    public void addInitialRootAttributes(RootElementPOJO rootElement)
     {
         initialRootAttributes.add(rootElement);
     }
