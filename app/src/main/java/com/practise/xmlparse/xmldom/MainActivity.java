@@ -56,18 +56,26 @@ public class MainActivity extends ActionBarActivity {
 
                     //Create only one instance
                     fileParameterPOJO=new FileParameterPOJO("LogCodes.xml",""
-                                            ,ComparisonConstants.ASSET_FILE,"LogCodes.xml","");
+                                            ,ComparisonConstants.SDCARD_FILE,"LogCodes.xml","");
                     initialParameterList=new InitialParameterList();
 
                     ParameterListAssetsFile =new ParametersList();
                     ParameterListSdCardFile=new ParametersList();
                     ParameterListFinal=new ParametersList();
 
-                    addInitialRootParameters("fastLogcodes;",ComparisonConstants.PUSH_XML);
-                    addInitialRootParameters("fastLogcodes;version",ComparisonConstants.PUSH_XML);
+                    addInitialRootParameters("fastLogcodes",ComparisonConstants.PUSH_XML);
+                    /*addInitialRootParameters("fastLogcodes;version",ComparisonConstants.PUSH_XML);
                     addInitialRootParameters("fastLogcodes;name",ComparisonConstants.PUSH_XML);
-                    addInitialRootParameters("fastLogcodes;name1",ComparisonConstants.PUSH_XML);
-                    //addInitialRootParameters("fastLogcodes;name2",0);
+                    addInitialRootParameters("fastLogcodes;value",ComparisonConstants.PUSH_XML);
+                    addInitialRootParameters("fastLogcodes;company",ComparisonConstants.PUSH_XML);
+                    addInitialRootParameters("fastLogcodes;company1",ComparisonConstants.PUSH_XML);*/
+
+                    addInitialRootParameters("fastLogcodes;A",ComparisonConstants.PUSH_XML);
+                    addInitialRootParameters("fastLogcodes;B",ComparisonConstants.PUSH_XML);
+                    addInitialRootParameters("fastLogcodes;C",ComparisonConstants.PUSH_XML);
+                    addInitialRootParameters("fastLogcodes;D",ComparisonConstants.PUSH_XML);
+                    addInitialRootParameters("fastLogcodes;E",ComparisonConstants.PUSH_XML);
+
 
                     printRootList(initialParameterList.getRootParameterList());
 
@@ -96,14 +104,15 @@ public class MainActivity extends ActionBarActivity {
                                         initialParameterList.getRootParameterList());
                     if(finalRootElementList!=null)
                     {
+                        Log.d(TAG,"---------- print final list start-------------");
                         printRootList(ParameterListSdCardFile.getRootParameterList());
-
+                        Log.d(TAG,"---------- print final list end-------------");
                         ParameterListFinal.setRootParameterList(finalRootElementList);
+                        Log.d(TAG,"---------- Writing XML start-------------");
                         WriteXmlFile writeFile = new WriteXmlFile(ParameterListFinal);
                         writeFile.writeXml();
+                        Log.d(TAG,"---------- Writing Xml end-------------");
                     }
-
-
                 }
 
                 catch (ParserConfigurationException e)
@@ -149,6 +158,7 @@ public class MainActivity extends ActionBarActivity {
 
             RootElementPOJO rootElementPOJO=null;
 
+
             /*Iterate the list to get all Initial Root Attributes set by user. Using those values
                get the attributes from rootElement and create a new list in ParametersList for root
                elements .
@@ -166,10 +176,12 @@ public class MainActivity extends ActionBarActivity {
                 // If tag name for root in initial list and root element matches
                 if(tagAttribute[0].equals(rootTagName))
                 {
+
                     if(tagAttribute.length>1)
                     {
                       /*Get the attribute value for attribute name given by initial root element list
-                      after splitting (tagAttribute[1])*/
+                      after splitting (tagAttribute[1]) . tagAttribute[0] gives root tag name
+                      */
                        String attributeValue=rootElement.getAttribute(tagAttribute[1]);
 
                     /* If the attribute exists in Root element create a RootPOJO object and add
@@ -177,9 +189,11 @@ public class MainActivity extends ActionBarActivity {
                         if(!attributeValue.isEmpty())
                         {
                             Log.d(TAG,"Add Root Element Attributes");
-                            paramList.addRootParameter(new
-                                    RootElementPOJO(rootElementName, attributeValue,
-                                    rootElementPOJO.getModeOfComparison()));
+
+                                paramList.addRootParameter(new
+                                        RootElementPOJO(rootElementName, attributeValue,
+                                        rootElementPOJO.getModeOfComparison()));
+
 
                         }
                     }
@@ -188,8 +202,10 @@ public class MainActivity extends ActionBarActivity {
                     else
                     {
                         Log.d(TAG,"Add Root Element");
-                        paramList.addRootParameter(new
-                                RootElementPOJO(tagAttribute[0],"",rootElementPOJO.getModeOfComparison()));
+
+                            paramList.addRootParameter(new
+                                    RootElementPOJO(tagAttribute[0], "", rootElementPOJO.getModeOfComparison()));
+
 
                     }
                 }
@@ -202,7 +218,7 @@ public class MainActivity extends ActionBarActivity {
     private List<RootElementPOJO> compareAndAddToListRoot(List<RootElementPOJO> listAssets,
                                        List<RootElementPOJO> listSdCard,List<RootElementPOJO> listInitial) {
 
-        List<RootElementPOJO> finalRootList = null;
+        List<RootElementPOJO> finalRootList=new ArrayList<RootElementPOJO>();
 
 
         /* If Attributes in Assets File list is greater than Sdcard file List
@@ -210,19 +226,50 @@ public class MainActivity extends ActionBarActivity {
 
         if ((listSdCard != null && listAssets != null) && (listAssets.size() > listSdCard.size())) {
             Log.d(TAG, "Assets list greater than sdcard");
-            finalRootList = listAssets;
+
+            int modeComparison=0;
+            RootElementPOJO rootElementAsset;
+            for(int counter=0;counter<listAssets.size();counter++)
+            {
+                rootElementAsset=listAssets.get(counter);
+                //get the mode whether element has to be pushed in final XML
+                modeComparison=initialParameterList.getModeComparison(rootElementAsset.getElementName());
+
+                //If the parameter has to be pushed in XML
+                if(modeComparison==ComparisonConstants.PUSH_XML)
+                {
+                    finalRootList.add(rootElementAsset);
+                }
+
+            }
+           // finalRootList = listAssets;
         }
 
          /* If Attributes in sdcard File list is greater than Assets file List
            write sdcard file Attribute to the final list */
 
-        if ((listSdCard != null && listAssets != null) && (listSdCard.size() > listAssets.size())) {
+        else if ((listSdCard != null && listAssets != null) && (listSdCard.size() > listAssets.size())) {
             Log.d(TAG, "sdcard list greater than Assets");
-            finalRootList = listSdCard;
+
+            int modeComparison=0;
+            RootElementPOJO rootElementSdCard;
+            for(int counter=0;counter<listSdCard.size();counter++)
+            {
+                rootElementSdCard=listSdCard.get(counter);
+                //get the mode whether element has to be pushed in final XML
+                modeComparison=initialParameterList.getModeComparison(rootElementSdCard.getElementName());
+
+                //If the parameter has to be pushed in XML
+                if(modeComparison==ComparisonConstants.PUSH_XML)
+                {
+                    finalRootList.add(rootElementSdCard);
+                }
+
+            }
+
+          //  finalRootList = listSdCard;
         }
         else{
-
-            finalRootList=new ArrayList<RootElementPOJO>();
 
             /* If Attributes in sdcard File list and Assets file List are equal to initial root list
                then iterate over the lists. If element has to be push in final Xml file
@@ -243,7 +290,7 @@ public class MainActivity extends ActionBarActivity {
                     rootEleSdCard = listSdCard.get(count);
                     rootEleInitial = listInitial.get(count);
 
-                    // check element has to be pushed or not
+                    //get the mode whether element has to be pushed in final XML
                     if (rootEleInitial.getModeOfComparison() == ComparisonConstants.PUSH_XML) {
                         Log.d(TAG, "PUSH XML Case");
 
@@ -277,9 +324,130 @@ public class MainActivity extends ActionBarActivity {
                     for (int count = 0; count < listSdCard.size(); count++) {
                         rootEleAssets = listAssets.get(count);
                         rootEleSdCard = listSdCard.get(count);
+                        int modeComparison=0;
 
+                        // If the final Root attribute list does not contain any element
+                        if(finalRootList.size()==0)
+                        {
+                            /*If the name of elements in both file are same then check whether*/
+                            if(rootEleAssets.getElementName().equals(rootEleSdCard.getElementName()))
+                            {
+                                Log.d(TAG, "First elements of both list are same");
+                                modeComparison=initialParameterList.getModeComparison(rootEleAssets.getElementName());
+                                if ( modeComparison== ComparisonConstants.PUSH_XML) {
+                                    Log.d(TAG, "PUSH XML Case1");
+
+                                    // check the file priority
+                                    if (fileParameterPOJO.getFilePriority() == ComparisonConstants.ASSET_FILE) {
+                                        Log.d(TAG, "ASSET File more priority1");
+                                        finalRootList.add(rootEleAssets);
+                                    } else {
+                                        Log.d(TAG, "SDcard File more priority1");
+                                        finalRootList.add(rootEleSdCard);
+                                    }
+                                } else if (modeComparison == ComparisonConstants.PUSH_XML_NOT) {
+                                    Log.d(TAG, "No PUSH XML Case1");
+                                }
+                            }
+                            /*If the name of elements are not same add both the elements after
+                            * then add both elements */
+                            else
+                            {
+                                modeComparison=initialParameterList.getModeComparison(rootEleAssets.getElementName());
+                                if ( modeComparison== ComparisonConstants.PUSH_XML) {
+                                    Log.d(TAG, "PUSH XML Case2");
+                                    finalRootList.add(rootEleAssets);
+                                }else if (modeComparison == ComparisonConstants.PUSH_XML_NOT) {
+                                    Log.d(TAG, "No PUSH XML Case2");
+                                }
+
+                                modeComparison=initialParameterList.getModeComparison(rootEleSdCard.getElementName());
+                                if ( modeComparison== ComparisonConstants.PUSH_XML) {
+                                    Log.d(TAG, "PUSH XML Case3");
+                                    finalRootList.add(rootEleSdCard);
+                                }else if (modeComparison == ComparisonConstants.PUSH_XML_NOT) {
+                                    Log.d(TAG, "No PUSH XML Case3");
+                                }
+                            }
+                        }
+                        else {
+
+                            if(rootEleAssets.getElementName().equals(rootEleSdCard.getElementName()))
+                            {
+                                Log.d(TAG, "First elements of both list are same");
+                                modeComparison=initialParameterList.getModeComparison(rootEleAssets.getElementName());
+                                if ( modeComparison== ComparisonConstants.PUSH_XML) {
+                                    Log.d(TAG, "PUSH XML Case4");
+
+                                    // check the file priority
+                                    if (fileParameterPOJO.getFilePriority() == ComparisonConstants.ASSET_FILE) {
+                                        Log.d(TAG, "ASSET File more priority4");
+                                        finalRootList.add(rootEleAssets);
+                                    } else {
+                                        Log.d(TAG, "SDcard File more priority4");
+                                        finalRootList.add(rootEleSdCard);
+                                    }
+                                } else if (modeComparison == ComparisonConstants.PUSH_XML_NOT) {
+                                    Log.d(TAG, "No PUSH XML Case4");
+                                }
+                            }
+                            else{
+
+                                int itr=0;
+                                for (itr=0;itr<finalRootList.size();itr++)
+                                {
+                                    if(finalRootList.get(itr).getElementName().equals(rootEleAssets.getElementName()))
+                                    {
+                                        if (fileParameterPOJO.getFilePriority() == ComparisonConstants.ASSET_FILE) {
+                                            Log.d(TAG, "ASSET File more priority4");
+
+                                            finalRootList.get(itr).setElementValue(rootEleAssets.getElementValue());
+
+                                            modeComparison=initialParameterList.getModeComparison(rootEleSdCard.getElementName());
+
+                                            if(modeComparison==ComparisonConstants.PUSH_XML){
+                                                finalRootList.add(rootEleSdCard);
+                                            }
+
+                                            break;
+                                        }
+                                    }
+                                     if(finalRootList.get(itr).getElementName().equals(rootEleSdCard.getElementName()))
+                                    {
+                                        if (fileParameterPOJO.getFilePriority() == ComparisonConstants.SDCARD_FILE) {
+                                            Log.d(TAG, "ASSET File more priority4");
+
+                                            finalRootList.get(itr).setElementValue(rootEleSdCard.getElementValue());
+
+                                            modeComparison=initialParameterList.getModeComparison(rootEleAssets.getElementName());
+
+                                            if(modeComparison==ComparisonConstants.PUSH_XML){
+                                                finalRootList.add(rootEleAssets);
+                                            }
+                                            break;
+                                        }
+                                    }
+
+                                }
+
+                                if(itr+1>finalRootList.size())
+                                {
+                                    Log.d(TAG, "outside loop. Adding both to final list");
+                                    modeComparison=initialParameterList.getModeComparison(rootEleAssets.getElementName());
+
+                                    if(modeComparison==ComparisonConstants.PUSH_XML){
+                                        finalRootList.add(rootEleAssets);
+                                    }
+
+                                    modeComparison=initialParameterList.getModeComparison(rootEleSdCard.getElementName());
+
+                                    if(modeComparison==ComparisonConstants.PUSH_XML){
+                                        finalRootList.add(rootEleSdCard);
+                                    }
+                                }
+                            }
+                        }
                     }
-
                 }
             }
          }
@@ -297,9 +465,9 @@ public class MainActivity extends ActionBarActivity {
        for (int i=0;i<list.size();i++)
        {
            RootElementPOJO elementPOJO=list.get(i);
-           Log.d(TAG,"Root Element Name"+elementPOJO.getElementName());
-           Log.d(TAG,"Root Element Value"+elementPOJO.getElementValue());
-           Log.d(TAG,"Root Element Mode"+elementPOJO.getModeOfComparison());
+           Log.d(TAG,"Root Element Name :"+elementPOJO.getElementName());
+           Log.d(TAG,"Root Element Value :"+elementPOJO.getElementValue());
+           Log.d(TAG,"Root Element Mode :"+elementPOJO.getModeOfComparison());
        }
 
        Log.d(TAG,"--------inside printRootList End-----------");
