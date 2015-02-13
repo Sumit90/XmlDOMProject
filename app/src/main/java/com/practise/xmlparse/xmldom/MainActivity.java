@@ -370,6 +370,10 @@ public class MainActivity extends ActionBarActivity {
                                 }
                             }
                         }
+
+                        /*If there are already some elements in the list then iterate over the list
+                        * to check whether current element exists in the list. If it exists then
+                        * check the file priority and update the element accordingly*/
                         else {
 
                             if(rootEleAssets.getElementName().equals(rootEleSdCard.getElementName()))
@@ -391,6 +395,8 @@ public class MainActivity extends ActionBarActivity {
                                     Log.d(TAG, "No PUSH XML Case4");
                                 }
                             }
+                            /*Iterate over the list to check whether the current element exists. If
+                            * exists update the list on the basis of file priority*/
                             else{
 
                                 int itr=0;
@@ -430,6 +436,7 @@ public class MainActivity extends ActionBarActivity {
 
                                 }
 
+                                /*If no match found in list then add both the elements*/
                                 if(itr+1>finalRootList.size())
                                 {
                                     Log.d(TAG, "outside loop. Adding both to final list");

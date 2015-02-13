@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><fastLogcodes version="1.35.1" name="myexample">
+   <LTE>
+      <Lte_logcode>
+         <name>0xB173</name>
+         <value>0</value>
+		 <desc>LTE ML1 PDSCH stat indication</desc>
+      </Lte_logcode>
+      <Lte_logcode>
+         <name>0xB16C</name>
+         <value>0</value>
+		 <desc>LTE ML1 DCI information report</desc>
+      </Lte_logcode>
+      <Lte_logcode>
+         <name>0xB14D</name>
+         <value>0</value>
+		 <desc>LTE LL1 PUCCH CSF</desc>
+      </Lte_logcode>
+      <Lte_logcode>
+         <name>0xB12C</name>
+         <value>0</value>
+		 <desc>LTE LL1 PHICH Decoding Results</desc>
+      </Lte_logcode>
+      <Lte_logcode>
+         <name>0xB14E</name>
+         <value>0</value>
+		 <desc>LTE LL1 PUSCH CSF</desc>
+      </Lte_logcode>
+	  <Lte_logcode>
+         <name>0xB130</name>
+         <value>0</value>
+		 <desc>LTE LL1 PDCCH Decoding Result</desc>
+      </Lte_logcode>
+	  <Lte_logcode>
+         <name>0xB061</name>
+         <value>0</value>
+		 <desc>MAC RACH Trigger</desc>
+      </Lte_logcode>
+	  <Lte_logcode>
+         <name>0xB167</name>
+         <value>0</value>
+		 <desc>ML1 Random Access Request (MSG1) report</desc>
+      </Lte_logcode>
+	   <Lte_logcode>
+         <name>0xB062</name>
+         <value>0</value>
+		 <desc>MAC RACH Attempt</desc>
+      </Lte_logcode>
+   </LTE>
+   <WCDMA>
+      <Wcdma_logcode>
+         <name>0x4010</name>
+         <value>0</value>
+		 <desc>WCDMA Uplink and Downlink Power Control</desc>
+      </Wcdma_logcode>
+      <Wcdma_logcode>
+         <name>0x4160</name>
+         <value>0</value>
+		 <desc>WCDMA RACH Parameters</desc>
+      </Wcdma_logcode>
+   </WCDMA>
+   <GSM/>
+   <CDMA/>
+   <EVDO/>
+</fastLogcodes>
