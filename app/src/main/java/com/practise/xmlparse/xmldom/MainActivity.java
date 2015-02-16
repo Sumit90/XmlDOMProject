@@ -294,27 +294,30 @@ public class MainActivity extends ActionBarActivity {
                 //get the mode whether element has to be pushed in final XML
                 modeComparison=initialParameterList.getModeComparison(rootElement.getElementName());
 
+
+                if(modeComparison==ComparisonConstants.COMPARE_EQUAL
+                        || modeComparison==ComparisonConstants.COMPARE_GREATER_FILE1
+                            || modeComparison==ComparisonConstants.COMPARE_GREATER_FILE2)
+                {
+                    //If file1 does not contain any of the elements exit the loop
+                    if(listRootFile1==null || listRootFile1.size()==0)
+                    {
+                        Log.d(TAG,"-----getMergedRootList(): listRootFile1==null");
+                        break OUTERLOOP;
+                    }
+                    //If file2 does not contain any of the elements exit the loop
+                    else if(listRootFile2==null || listRootFile2.size()==0)
+                    {
+                        Log.d(TAG,"-----getMergedRootList(): listRootFile2==null");
+                        break OUTERLOOP;
+                    }
+                }
+
                 switch(modeComparison)
                 {
                     // If mode of comparison is compare for equal
 //-------------------------------------COMPARE_EQUAL START------------------------------------------
                     case ComparisonConstants.COMPARE_EQUAL:
-
-                        //If file1 does not contain any of the elements exit the loop
-                        if(listRootFile1==null || listRootFile1.size()==0)
-                        {
-                            Log.d(TAG,"-----getMergedRootList(): listRootFile1==null");
-                            break OUTERLOOP;
-                        }
-                        //If file2 does not contain any of the elements exit the loop
-                        else if(listRootFile2==null || listRootFile2.size()==0)
-                        {
-                            Log.d(TAG,"-----getMergedRootList(): listRootFile2==null");
-                            break OUTERLOOP;
-                        }
-
-                        int l_i=0;
-                        int l_j=0;
 
                         // Check if element exists in File1 Root list
                         rootElementFile1=getElement(listRootFile1,rootElement);
@@ -376,7 +379,21 @@ public class MainActivity extends ActionBarActivity {
 
 //-------------------------------------COMPARE_EQUAL END--------------------------------------------
 
+//--------------------------------COMPARE_GREATER_FILE1 START---------------------------------------
 
+                    case ComparisonConstants.COMPARE_GREATER_FILE1:
+
+                        break;
+//--------------------------------COMPARE_GREATER_FILE1 END-----------------------------------------
+
+//--------------------------------COMPARE_GREATER_FILE2 START---------------------------------------
+
+                    case ComparisonConstants.COMPARE_GREATER_FILE2:
+
+                        break;
+
+
+//-------------------------------COMPARE_GREATER_FILE2 END------------------------------------------
                 }
             }
         }
