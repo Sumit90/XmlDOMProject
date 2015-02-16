@@ -12,6 +12,7 @@ import android.widget.Button;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -24,21 +25,23 @@ public class MainActivity extends ActionBarActivity {
 
     private Button parseBtn;
 
-    private InputStream inputStreamAssetsFile;
-    private InputStream inputStreamSdCardFile;
+    private InputStream inputStreamFile1;
+    private InputStream inputStreamFile2;
 
-    private XmlParser parseAssetsFile;
-    private XmlParser parseSdCardFile;
+    private XmlParser parseFile1;
+    private XmlParser parseFile2;
 
     private InitialParameterList initialParameterList;
 
-    private ParametersList ParameterListAssetsFile;
-    private ParametersList ParameterListSdCardFile;
+    private ParametersList ParameterListFile1;
+    private ParametersList ParameterListFile2;
     private ParametersList ParameterListFinal;
 
     private FileParameterPOJO fileParameterPOJO;
 
     private final String TAG="MYLOGS";
+
+    private boolean statusMerging=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,88 +51,62 @@ public class MainActivity extends ActionBarActivity {
         parseBtn=(Button)findViewById(R.id.parse_button);
 
 
-
         parseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
 
-                    //Create only one instance
-                    fileParameterPOJO=new FileParameterPOJO("LogCodes.xml",""
-                                            ,ComparisonConstants.SDCARD_FILE,"LogCodes.xml","");
-                    initialParameterList=new InitialParameterList();
-
-                    ParameterListAssetsFile =new ParametersList();
-                    ParameterListSdCardFile=new ParametersList();
-                    ParameterListFinal=new ParametersList();
-
-                    addInitialRootParameters("fastLogcodes",ComparisonConstants.PUSH_XML);
-                    /*addInitialRootParameters("fastLogcodes;version",ComparisonConstants.PUSH_XML);
-                    addInitialRootParameters("fastLogcodes;name",ComparisonConstants.PUSH_XML);
-                    addInitialRootParameters("fastLogcodes;value",ComparisonConstants.PUSH_XML);
-                    addInitialRootParameters("fastLogcodes;company",ComparisonConstants.PUSH_XML);
-                    addInitialRootParameters("fastLogcodes;company1",ComparisonConstants.PUSH_XML);*/
-
-                    addInitialRootParameters("fastLogcodes;A",ComparisonConstants.PUSH_XML);
-                    addInitialRootParameters("fastLogcodes;B",ComparisonConstants.PUSH_XML);
-                    addInitialRootParameters("fastLogcodes;C",ComparisonConstants.PUSH_XML);
-                    addInitialRootParameters("fastLogcodes;D",ComparisonConstants.PUSH_XML);
-                    addInitialRootParameters("fastLogcodes;E",ComparisonConstants.PUSH_XML);
-
-
-                    printRootList(initialParameterList.getRootParameterList());
-
-                    //open the assets file
-                    inputStreamAssetsFile = getResources().getAssets().open("LogCodes.xml");
-                    inputStreamSdCardFile = getResources().getAssets().open("LogCodes1.xml");
-
-                    parseAssetsFile = new XmlParser(inputStreamAssetsFile);
-                    parseSdCardFile=  new XmlParser(inputStreamSdCardFile);
-
-                    //get the root elements of the XML files
-                    Element rootElementAssetsFile = parseAssetsFile.parseRootElement();
-                    Element rootElementSdCardFile = parseSdCardFile.parseRootElement();
-
-                    //add root parameters to list after comparing with initial root elements
-                    addRootParameters(ParameterListAssetsFile,rootElementAssetsFile);
-                    addRootParameters(ParameterListSdCardFile,rootElementSdCardFile);
-
-                    printRootList(ParameterListAssetsFile.getRootParameterList());
-                    printRootList(ParameterListSdCardFile.getRootParameterList());
-
-
-                    //get the final Root element Lists
-                    List<RootElementPOJO> finalRootElementList =compareAndAddToListRoot
-                                (ParameterListAssetsFile.getRootParameterList(),ParameterListSdCardFile.getRootParameterList(),
-                                        initialParameterList.getRootParameterList());
-                    if(finalRootElementList!=null)
+                    if(init())
                     {
-                        Log.d(TAG,"---------- print final list start-------------");
-                        printRootList(ParameterListSdCardFile.getRootParameterList());
-                        Log.d(TAG,"---------- print final list end-------------");
-                        ParameterListFinal.setRootParameterList(finalRootElementList);
-                        Log.d(TAG,"---------- Writing XML start-------------");
-                        WriteXmlFile writeFile = new WriteXmlFile(ParameterListFinal);
-                        writeFile.writeXml();
-                        Log.d(TAG,"---------- Writing Xml end-------------");
+                        //get the root elements of the XML files
+                        Element rootElementAssetsFile = parseFile1.parseRootElement();
+                        Element rootElementSdCardFile = parseFile2.parseRootElement();
+
+                        //add root parameters to list after comparing with initial root elements
+                        addRootParameters(ParameterListFile1,rootElementAssetsFile);
+                        addRootParameters(ParameterListFile2,rootElementSdCardFile);
+
+                        printRootList(ParameterListFile1.getRootParameterList());
+                        printRootList(ParameterListFile2.getRootParameterList());
+
+                        //get the final Root element Lists
+                        /*List<RootElementPOJO> finalRootElementList =compareAndAddToListRoot
+                                (ParameterListFile1.getRootParameterList(),ParameterListFile2.getRootParameterList(),
+                                        initialParameterList.getRootParameterList());*/
+
+                        List<RootElementPOJO> finalRootElementList =getMergedRootList
+                                                        (ParameterListFile1.getRootParameterList(),
+                                                            ParameterListFile2.getRootParameterList(),
+                                                             initialParameterList.getRootParameterList());
+
+
+                        if(finalRootElementList!=null && statusMerging)
+                        {
+                            Log.d(TAG,"---------- print final list start-------------");
+                            printRootList(finalRootElementList);
+                            Log.d(TAG,"---------- print final list end-------------");
+                            ParameterListFinal.setRootParameterList(finalRootElementList);
+                            Log.d(TAG,"---------- Writing XML start-------------");
+                            WriteXmlFile writeFile = new WriteXmlFile(ParameterListFinal);
+                            writeFile.writeXml();
+                            Log.d(TAG,"---------- Writing Xml end-------------");
+                        }
+                        else
+                        {
+                            Log.d(TAG,"-------Cannot write the XML File-----------------");
+                        }
+
+
                     }
+
                 }
 
-                catch (ParserConfigurationException e)
+                /*catch (ParserConfigurationException e)
                 {
                     Log.d(TAG,"inside ParserConfigurationException");
                     e.printStackTrace();
-                }
-                catch (SAXException e)
-                {
-                    Log.d(TAG,"inside SAXException");
-                    e.printStackTrace();
-                }
-                catch (IOException e)
-                {
-                    Log.d(TAG,"inside IOException");
-                    e.printStackTrace();
-                }
+                }*/
+
                 catch (Exception e) {
 
                     Log.d(TAG,"inside Exception");
@@ -139,16 +116,96 @@ public class MainActivity extends ActionBarActivity {
             }
         });
     }
+
+
 //--------------------------------------------------------------------------------------------------
-    //This function is used to add Initial Root attributes to be used for comparing and extracting
+/*The init function is the first function that will called. This function does various tasks like
+* 1) Getting the input stream files from user
+ *2) Parse the files
+ *3) Initialising FileParameterPOJO
+ *4) Adding Root Tag name and required attributes to the initial Root Parameter List */
+//--------------------------------------------------------------------------------------------------
+    public boolean init()
+    {
+        boolean isInitSuccess;
+
+        try {
+
+          //----------------get the input streams of file here from user----------------------------
+            inputStreamFile1 = getResources().getAssets().open("LogCodes.xml");
+            inputStreamFile2 = getResources().getAssets().open("LogCodes1.xml");
+          //----------------------------------------------------------------------------------------
+
+
+            parseFile1 = new XmlParser(inputStreamFile1);
+            parseFile2 =  new XmlParser(inputStreamFile2);
+
+            fileParameterPOJO=new FileParameterPOJO(inputStreamFile1,inputStreamFile2
+                    ,ComparisonConstants.PRIORITY_FILE1,"LogCodes.xml","",true);
+
+            initialParameterList=new InitialParameterList();
+
+            ParameterListFile1 =new ParametersList();
+            ParameterListFile2 =new ParametersList();
+            ParameterListFinal=new ParametersList();
+
+            addInitialRootParameters("fastLogcodes",ComparisonConstants.COMPARE_EQUAL);
+            addInitialRootParameters("fastLogcodes;A",ComparisonConstants.COMPARE_EQUAL);
+            addInitialRootParameters("fastLogcodes;B",ComparisonConstants.COMPARE_EQUAL);
+            addInitialRootParameters("fastLogcodes;C",ComparisonConstants.COMPARE_EQUAL);
+
+
+            printRootList(initialParameterList.getRootParameterList());
+
+            isInitSuccess=true;
+        }
+
+        catch(FileNotFoundException ex)
+        {
+            isInitSuccess=false;
+            Log.d(TAG,"inside init FileNotFoundException");
+            ex.printStackTrace();
+
+        }
+        catch(IOException ex)
+        {
+            isInitSuccess=false;
+            Log.d(TAG,"inside init IOException");
+            ex.printStackTrace();
+
+        }
+        catch (ParserConfigurationException e)
+        {
+            isInitSuccess=false;
+            Log.d(TAG,"inside init ParserConfigurationException");
+            e.printStackTrace();
+        }
+        catch (SAXException e)
+        {
+            isInitSuccess=false;
+            Log.d(TAG,"inside init SAXException");
+            e.printStackTrace();
+        }
+        catch(Exception ex)
+        {
+            isInitSuccess=false;
+            Log.d(TAG,"inside init Exception");
+            ex.printStackTrace();
+        }
+
+        return isInitSuccess;
+    }
+
+
+//--------------------------------------------------------------------------------------------------
+//This function is used to add Initial Root attributes to be used for comparing and extracting
         void addInitialRootParameters(String attributeName,int mode)
         {
             initialParameterList.addInitialRootAttributes(new RootElementPOJO(attributeName, mode));
         }
 //--------------------------------------------------------------------------------------------------
 
-
-    //This function will add root attributes to root parameter list after comparing it with initial list
+//This function will add root attributes to root parameter list after comparing it with initial list
         void addRootParameters(ParametersList paramList,Element rootElement)
         {
            //This will give the Tag name of Root Element
@@ -157,7 +214,6 @@ public class MainActivity extends ActionBarActivity {
             List<RootElementPOJO> initialRootParams = initialParameterList.getRootParameterList();
 
             RootElementPOJO rootElementPOJO=null;
-
 
             /*Iterate the list to get all Initial Root Attributes set by user. Using those values
                get the attributes from rootElement and create a new list in ParametersList for root
@@ -188,21 +244,16 @@ public class MainActivity extends ActionBarActivity {
                     * it to the list*/
                         if(!attributeValue.isEmpty())
                         {
-                            Log.d(TAG,"Add Root Element Attributes");
 
                                 paramList.addRootParameter(new
                                         RootElementPOJO(rootElementName, attributeValue,
                                         rootElementPOJO.getModeOfComparison()));
-
-
                         }
                     }
 
                     //If user has passed only Root tag name add it to the list.
                     else
                     {
-                        Log.d(TAG,"Add Root Element");
-
                             paramList.addRootParameter(new
                                     RootElementPOJO(tagAttribute[0], "", rootElementPOJO.getModeOfComparison()));
 
@@ -211,7 +262,150 @@ public class MainActivity extends ActionBarActivity {
                 }
             }
         }
+
+
 //--------------------------------------------------------------------------------------------------
+    private List<RootElementPOJO> getMergedRootList(List<RootElementPOJO> listRootFile1,
+                               List<RootElementPOJO> listRootFile2,List<RootElementPOJO> listRootInitial) {
+
+        List<RootElementPOJO> finalRootList=null;
+
+        // If the user has not provided any Root attribute list
+        if(listRootInitial==null || listRootInitial.size()==0)
+        {
+            Log.d(TAG,"-----getMergedRootList(): listRootInitial==null");
+        }
+        // If no user specified attribute exists in any of the list
+        else if((listRootFile1==null || listRootFile1.size()==0) && (listRootFile2==null || listRootFile2.size()==0))
+        {
+            Log.d(TAG,"-----getMergedRootList(): listRootFile1==null && listRootFile2==null");
+        }
+        else
+        {
+            finalRootList=new ArrayList<RootElementPOJO>();
+            RootElementPOJO rootElement=null;
+            RootElementPOJO rootElementFile1=null;
+            RootElementPOJO rootElementFile2=null;
+
+            int modeComparison=0;
+            OUTERLOOP:for(int counter=0;counter<listRootInitial.size();counter++)
+            {
+                rootElement=listRootInitial.get(counter);
+                //get the mode whether element has to be pushed in final XML
+                modeComparison=initialParameterList.getModeComparison(rootElement.getElementName());
+
+                switch(modeComparison)
+                {
+                    // If mode of comparison is compare for equal
+//-------------------------------------COMPARE_EQUAL START------------------------------------------
+                    case ComparisonConstants.COMPARE_EQUAL:
+
+                        //If file1 does not contain any of the elements exit the loop
+                        if(listRootFile1==null || listRootFile1.size()==0)
+                        {
+                            Log.d(TAG,"-----getMergedRootList(): listRootFile1==null");
+                            break OUTERLOOP;
+                        }
+                        //If file2 does not contain any of the elements exit the loop
+                        else if(listRootFile2==null || listRootFile2.size()==0)
+                        {
+                            Log.d(TAG,"-----getMergedRootList(): listRootFile2==null");
+                            break OUTERLOOP;
+                        }
+
+                        int l_i=0;
+                        int l_j=0;
+
+                        // Check if element exists in File1 Root list
+                        rootElementFile1=getElement(listRootFile1,rootElement);
+
+                       /*If the required element is found in File1 then check for the element in File2*/
+                       if(rootElementFile1!=null)
+                       {
+                           rootElementFile2=getElement(listRootFile2,rootElement);
+
+                       }
+                       /*If the required element not found in File1 then break the loop*/
+                        else
+                       {
+                         statusMerging=false;
+                         Log.d(TAG,"-----getMergedRootList(): "+rootElement.getElementName()+" Not Found in File1");
+                       }
+
+                        /* If the required element is found in File1 and File 2 then add the element
+                        * in final list after checking which file has more priority*/
+                        if(rootElementFile1!=null && rootElementFile2!=null)
+                        {
+                           /*Compare the attribute values of File1 and File2. If they are equal add
+                           it to final list else exit the outer loop*/
+                           if((rootElementFile1.getElementValue().trim()).equals(rootElementFile2.getElementValue().trim()))
+                           {
+                               /*If file1 has more priority then add the element in final list from file1 list*/
+                               if(fileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
+                               {
+                                   finalRootList.add(rootElementFile1);
+                               }
+                            /*If file2 has more priority then add the element in final list from file2 list*/
+                               else
+                               {
+                                   finalRootList.add(rootElementFile2);
+                               }
+                               statusMerging=true;
+                           }
+                            else
+                           {
+                               Log.d(TAG,"-----getMergedRootList(): "+rootElementFile1.getElementValue()+" != "+rootElementFile2.getElementValue());
+                               statusMerging=false;
+                               break OUTERLOOP;
+                           }
+
+                        }
+                         /*If the required element not found in File2 then break the loop*/
+                        else
+                        {
+                            if(rootElementFile2==null)
+                            {
+                                Log.d(TAG,"-----getMergedRootList(): "+rootElement.getElementName()+" Not Found File2");
+                                statusMerging=false;
+                            }
+
+                            break OUTERLOOP;
+                        }
+
+                        break;
+
+//-------------------------------------COMPARE_EQUAL END--------------------------------------------
+
+
+                }
+            }
+        }
+
+
+        return finalRootList;
+
+
+    }
+//--------------------------------------------------------------------------------------------------
+    /*This element basically searches for a element searchElement in list listElements and returns
+    * the searched element from the list*/
+    private RootElementPOJO getElement(List<RootElementPOJO> listElements,RootElementPOJO searchElement)
+    {
+        int l_i=0;
+        RootElementPOJO searchedElement=null;
+        for ( l_i=0;l_i<listElements.size();l_i++)
+        {
+            if(listElements.get(l_i).getElementName().equals(searchElement.getElementName()))
+            {
+                searchedElement=listElements.get(l_i);
+                break;
+            }
+        }
+        return searchedElement;
+    }
+
+//--------------------------------------------------------------------------------------------------
+
 /* This method will compare the Root element List from both Asset file and SdCard File and will
     create a final root element list to be written*/
 
@@ -295,7 +489,7 @@ public class MainActivity extends ActionBarActivity {
                         Log.d(TAG, "PUSH XML Case");
 
                         // check the file priority
-                        if (fileParameterPOJO.getFilePriority() == ComparisonConstants.ASSET_FILE) {
+                        if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
                             Log.d(TAG, "ASSET File more priority");
                             finalRootList.add(rootEleAssets);
                         } else {
@@ -338,7 +532,7 @@ public class MainActivity extends ActionBarActivity {
                                     Log.d(TAG, "PUSH XML Case1");
 
                                     // check the file priority
-                                    if (fileParameterPOJO.getFilePriority() == ComparisonConstants.ASSET_FILE) {
+                                    if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
                                         Log.d(TAG, "ASSET File more priority1");
                                         finalRootList.add(rootEleAssets);
                                     } else {
@@ -384,7 +578,7 @@ public class MainActivity extends ActionBarActivity {
                                     Log.d(TAG, "PUSH XML Case4");
 
                                     // check the file priority
-                                    if (fileParameterPOJO.getFilePriority() == ComparisonConstants.ASSET_FILE) {
+                                    if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
                                         Log.d(TAG, "ASSET File more priority4");
                                         finalRootList.add(rootEleAssets);
                                     } else {
@@ -396,7 +590,7 @@ public class MainActivity extends ActionBarActivity {
                                 }
                             }
                             /*Iterate over the list to check whether the current element exists. If
-                            * exists update the list on the basis of file priority*/
+                            * exists update the existing element in the list on the basis of file priority*/
                             else{
 
                                 int itr=0;
@@ -404,7 +598,7 @@ public class MainActivity extends ActionBarActivity {
                                 {
                                     if(finalRootList.get(itr).getElementName().equals(rootEleAssets.getElementName()))
                                     {
-                                        if (fileParameterPOJO.getFilePriority() == ComparisonConstants.ASSET_FILE) {
+                                        if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
                                             Log.d(TAG, "ASSET File more priority4");
 
                                             finalRootList.get(itr).setElementValue(rootEleAssets.getElementValue());
@@ -420,7 +614,7 @@ public class MainActivity extends ActionBarActivity {
                                     }
                                      if(finalRootList.get(itr).getElementName().equals(rootEleSdCard.getElementName()))
                                     {
-                                        if (fileParameterPOJO.getFilePriority() == ComparisonConstants.SDCARD_FILE) {
+                                        if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE2) {
                                             Log.d(TAG, "ASSET File more priority4");
 
                                             finalRootList.get(itr).setElementValue(rootEleSdCard.getElementValue());
