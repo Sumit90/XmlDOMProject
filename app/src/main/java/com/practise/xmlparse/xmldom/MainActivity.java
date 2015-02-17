@@ -268,10 +268,11 @@ public class MainActivity extends ActionBarActivity {
     private List<RootElementPOJO> getMergedRootList(List<RootElementPOJO> listRootFile1,
                                List<RootElementPOJO> listRootFile2,List<RootElementPOJO> listRootInitial) {
 
+        // This is the list that will contain merged elements.
         List<RootElementPOJO> finalRootList=null;
 
-        // If the user has not provided any Root attribute list
-        if(listRootInitial==null || listRootInitial.size()==0)
+        // If the user has not provided any initial Root attribute list
+        if(listRootInitial==null )
         {
             Log.d(TAG,"-----getMergedRootList(): listRootInitial==null");
         }
@@ -288,115 +289,289 @@ public class MainActivity extends ActionBarActivity {
             RootElementPOJO rootElementFile2=null;
 
             int modeComparison=0;
-            OUTERLOOP:for(int counter=0;counter<listRootInitial.size();counter++)
-            {
-                rootElement=listRootInitial.get(counter);
-                //get the mode whether element has to be pushed in final XML
-                modeComparison=initialParameterList.getModeComparison(rootElement.getElementName());
+            OUTERLOOP:for(int counter=0;counter<listRootInitial.size();counter++) {
+                rootElement = listRootInitial.get(counter);
+
+                //get the mode how element has to be pushed in final XML
+                modeComparison = initialParameterList.getModeComparison(rootElement.getElementName());
 
 
-                if(modeComparison==ComparisonConstants.COMPARE_EQUAL
-                        || modeComparison==ComparisonConstants.COMPARE_GREATER_FILE1
-                            || modeComparison==ComparisonConstants.COMPARE_GREATER_FILE2)
-                {
+                if (modeComparison == ComparisonConstants.COMPARE_EQUAL
+                        || modeComparison == ComparisonConstants.COMPARE_GREATER_FILE1
+                        || modeComparison == ComparisonConstants.COMPARE_GREATER_FILE2
+                        || modeComparison == ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1
+                        || modeComparison == ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2) {
                     //If file1 does not contain any of the elements exit the loop
-                    if(listRootFile1==null || listRootFile1.size()==0)
-                    {
-                        Log.d(TAG,"-----getMergedRootList(): listRootFile1==null");
+                    if (listRootFile1 == null || listRootFile1.size() == 0) {
+                        Log.d(TAG, "-----getMergedRootList(): listRootFile1==null");
+                        statusMerging = false;
                         break OUTERLOOP;
                     }
                     //If file2 does not contain any of the elements exit the loop
-                    else if(listRootFile2==null || listRootFile2.size()==0)
-                    {
-                        Log.d(TAG,"-----getMergedRootList(): listRootFile2==null");
+                    else if (listRootFile2 == null || listRootFile2.size() == 0) {
+                        Log.d(TAG, "-----getMergedRootList(): listRootFile2==null");
+                        statusMerging = false;
                         break OUTERLOOP;
                     }
+
+
+                // Check if element exists in File1 Root list
+                rootElementFile1 = getElement(listRootFile1, rootElement);
+
+                   /*If the required element is found in File1 then check for the element in File2*/
+                if (rootElementFile1 != null) {
+                    rootElementFile2 = getElement(listRootFile2, rootElement);
+
+                }
+                   /*If the required element not found in File1 then break the loop*/
+                else {
+                    statusMerging = false;
+                    Log.d(TAG, "-----getMergedRootList(): " + rootElement.getElementName() + " Not Found in File1");
+                    break OUTERLOOP;
                 }
 
-                switch(modeComparison)
-                {
-                    // If mode of comparison is compare for equal
-//-------------------------------------COMPARE_EQUAL START------------------------------------------
-                    case ComparisonConstants.COMPARE_EQUAL:
+                    /* If the required element is found in File1 and File 2 then add the element
+                    * in final list after checking which file has more priority*/
 
-                        // Check if element exists in File1 Root list
-                        rootElementFile1=getElement(listRootFile1,rootElement);
-
-                       /*If the required element is found in File1 then check for the element in File2*/
-                       if(rootElementFile1!=null)
-                       {
-                           rootElementFile2=getElement(listRootFile2,rootElement);
-
-                       }
-                       /*If the required element not found in File1 then break the loop*/
-                        else
-                       {
-                         statusMerging=false;
-                         Log.d(TAG,"-----getMergedRootList(): "+rootElement.getElementName()+" Not Found in File1");
-                       }
-
-                        /* If the required element is found in File1 and File 2 then add the element
-                        * in final list after checking which file has more priority*/
-                        if(rootElementFile1!=null && rootElementFile2!=null)
-                        {
-                           /*Compare the attribute values of File1 and File2. If they are equal add
-                           it to final list else exit the outer loop*/
-                           if((rootElementFile1.getElementValue().trim()).equals(rootElementFile2.getElementValue().trim()))
-                           {
-                               /*If file1 has more priority then add the element in final list from file1 list*/
-                               if(fileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
-                               {
-                                   finalRootList.add(rootElementFile1);
-                               }
-                            /*If file2 has more priority then add the element in final list from file2 list*/
-                               else
-                               {
-                                   finalRootList.add(rootElementFile2);
-                               }
-                               statusMerging=true;
-                           }
-                            else
-                           {
-                               Log.d(TAG,"-----getMergedRootList(): "+rootElementFile1.getElementValue()+" != "+rootElementFile2.getElementValue());
-                               statusMerging=false;
-                               break OUTERLOOP;
-                           }
-
-                        }
-                         /*If the required element not found in File2 then break the loop*/
-                        else
-                        {
-                            if(rootElementFile2==null)
-                            {
-                                Log.d(TAG,"-----getMergedRootList(): "+rootElement.getElementName()+" Not Found File2");
-                                statusMerging=false;
+                 if (rootElementFile1 != null && rootElementFile2 != null) {
+                    // If mode of comparison check for equality of element values
+                    if (modeComparison == ComparisonConstants.COMPARE_EQUAL) {
+                     /*Compare the attribute values of File1 and File2. If they are equal add it to
+                        final list else exit the outer loop*/
+                        if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
+                                ComparisonConstants.COMPARE_EQUAL)) {
+                           /*If file1 has more priority then add the element in final list from file1 list*/
+                            if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
+                                finalRootList.add(rootElementFile1);
                             }
-
+                            /*If file2 has more priority then add the element in final list from file2 list*/
+                            else if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE2) {
+                                finalRootList.add(rootElementFile2);
+                            }
+                            statusMerging = true;
+                        }
+                        // If the attribute value if File1 and File2 are not equal
+                        else {
+                            Log.d(TAG, "-----getMergedRootList():COMPARE_EQUAL " + rootElementFile1.getElementValue() + " != " + rootElementFile2.getElementValue());
+                            statusMerging = false;
                             break OUTERLOOP;
                         }
 
-                        break;
+                    }
+                     /*Check if the attribute value is greater in File1. If true add the attribute
+                       from File1 */
+                    else if (modeComparison == ComparisonConstants.COMPARE_GREATER_FILE1) {
+                        if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
+                                ComparisonConstants.COMPARE_GREATER_FILE1)) {
 
-//-------------------------------------COMPARE_EQUAL END--------------------------------------------
+                            finalRootList.add(rootElementFile1);
+                            statusMerging = true;
+                        } else {
+                            Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE1 " + rootElementFile1.getElementValue() + " < " + rootElementFile2.getElementValue());
+                            statusMerging = false;
+                            break OUTERLOOP;
+                        }
+                    }
+                    /*Check if the attribute value is greater in File2. If true add the attribute
+                     from File2 */
+                    else if (modeComparison == ComparisonConstants.COMPARE_GREATER_FILE2) {
+                        if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
+                                ComparisonConstants.COMPARE_GREATER_FILE2)) {
+                            finalRootList.add(rootElementFile2);
+                            statusMerging = true;
+                        } else {
+                            Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE2 " + rootElementFile2.getElementValue() + " < " + rootElementFile1.getElementValue());
+                            statusMerging = false;
+                            break OUTERLOOP;
+                        }
+                    }
+                    /*Check if the attribute value is greater or equal in File1. If true add the attribute
+                      from File1 */
+                    else if (modeComparison == ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1) {
+                        if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
+                                ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1)) {
+                            finalRootList.add(rootElementFile1);
+                            statusMerging = true;
+                        } else {
+                            Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE2 " + rootElementFile1.getElementValue() + " < !=" + rootElementFile2.getElementValue());
+                            statusMerging = false;
+                            break OUTERLOOP;
+                        }
+                    }
 
-//--------------------------------COMPARE_GREATER_FILE1 START---------------------------------------
+                    /*Check if the attribute value is greater or equal in File2. If true add the attribute
+                      from File2 */
+                    else if (modeComparison == ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2) {
+                        if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
+                                ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2)) {
+                            finalRootList.add(rootElementFile2);
+                            statusMerging = true;
+                        } else {
+                            Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE2 " + rootElementFile2.getElementValue() + " < 1=" + rootElementFile1.getElementValue());
+                            statusMerging = false;
+                            break OUTERLOOP;
+                        }
+                    }
 
-                    case ComparisonConstants.COMPARE_GREATER_FILE1:
 
-                        break;
-//--------------------------------COMPARE_GREATER_FILE1 END-----------------------------------------
+                 }
+                     /*If the required element not found in File2 then break the loop*/
+                else {
+                    if (rootElementFile2 == null) {
+                        Log.d(TAG, "-----getMergedRootList(): " + rootElement.getElementName() + " Not Found File2");
+                        statusMerging = false;
+                    }
 
-//--------------------------------COMPARE_GREATER_FILE2 START---------------------------------------
+                    break OUTERLOOP;
+                  }
+            }
+             /*Always Pick the element from the File1. If element exists it will be added in final
+             * list otherwise loop will get break.*/
+            else if(modeComparison==ComparisonConstants.PICK_FROM_FILE1)
+            {
+                //If file1 does not contain any of the elements exit the loop
+                if (listRootFile1 == null || listRootFile1.size() == 0) {
+                    Log.d(TAG, "-----getMergedRootList(): listRootFile1==null");
+                    statusMerging = false;
+                    break OUTERLOOP;
+                }
+                else {
+                    // Check if element exists in File1 Root list
+                    rootElementFile1 = getElement(listRootFile1, rootElement);
 
-                    case ComparisonConstants.COMPARE_GREATER_FILE2:
+                   /*If the required element is found in File1 then add it the final list*/
+                    if (rootElementFile1 != null) {
+                        finalRootList.add(rootElementFile2);
+                        statusMerging = true;
+                    }
+                   /*If the required element not found in File1 then break the loop*/
+                    else {
+                        statusMerging = false;
+                        Log.d(TAG, "-----getMergedRootList():PICK_FROM_FILE1 " + rootElement.getElementName() + " Not Found in File1");
+                        break OUTERLOOP;
+                    }
 
-                        break;
-
-
-//-------------------------------COMPARE_GREATER_FILE2 END------------------------------------------
                 }
             }
-        }
+             /*Always Pick the element from the File2. If element exists it will be added in final
+             * list otherwise loop will get break.*/
+                else if(modeComparison==ComparisonConstants.PICK_FROM_FILE2)
+            {
+                //If file2 does not contain any of the elements exit the loop
+                if (listRootFile2 == null || listRootFile2.size() == 0) {
+                    Log.d(TAG, "-----getMergedRootList(): listRootFile2==null");
+                    statusMerging = false;
+                    break OUTERLOOP;
+                }
+                else {
+                    // Check if element exists in File2 Root list
+                    rootElementFile2 = getElement(listRootFile2, rootElement);
+
+                   /*If the required element is found in File1 then add it the final list*/
+                    if (rootElementFile2 != null) {
+                        finalRootList.add(rootElementFile2);
+                        statusMerging = true;
+                    }
+                   /*If the required element not found in File2 then break the loop*/
+                    else {
+                        statusMerging = false;
+                        Log.d(TAG, "-----getMergedRootList():PICK_FROM_FILE2 " + rootElement.getElementName() + " Not Found in File2");
+                        break OUTERLOOP;
+                    }
+
+                }
+
+            }
+             /*If user has specified the mode of comparison to be NO_COMPARISON*/
+            else if(modeComparison==ComparisonConstants.NO_COMPARISON)
+            {
+
+              /* If both the file list are non empty then check if the element exists in both the lists.
+              */
+              if((listRootFile1!=null&&listRootFile1.size()>0)&&(listRootFile2!=null&&listRootFile2.size()>0))
+              {
+                  rootElementFile1=getElement(listRootFile1, rootElement);
+                  rootElementFile2=getElement(listRootFile2, rootElement);
+
+               /*If the element does not exists in both of the lists then break the loop.*/
+                  if(rootElementFile1==null && rootElementFile2==null)
+                  {
+                      statusMerging = false;
+                      Log.d(TAG, "-----getMergedRootList():NO_COMPARISON "+" rootElementFile1==null && rootElementFile2==null");
+                      break OUTERLOOP;
+                  }
+                  /*If the element exists in File1 list add it to the final list*/
+                  else if(rootElementFile1!=null && rootElementFile2==null)
+                  {
+                      finalRootList.add(rootElementFile1);
+                      statusMerging = true;
+                  }
+                   /*If the element exists in File2 list add it to the final list*/
+                  else if(rootElementFile1==null && rootElementFile2!=null)
+                  {
+                      finalRootList.add(rootElementFile2);
+                      statusMerging = true;
+                  }
+                  /*If the element exists in both the lists then check the file priority.*/
+                  else if(rootElementFile1!=null && rootElementFile2!=null)
+                  {
+                      /*If the File 1 has more priority then add the element form File1 list*/
+                      if(fileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
+                      {
+                          finalRootList.add(rootElementFile1);
+                          statusMerging = true;
+                      }
+                      /*If the File 2 has more priority then add the element form File2 list*/
+                      else  if(fileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE2)
+                      {
+                          finalRootList.add(rootElementFile2);
+                          statusMerging = true;
+                      }
+                  }
+              }
+              /*If File 1 list does not contain any element but File 2 list contains elements*/
+              else if ((listRootFile1==null || listRootFile1.size()==0)&&(listRootFile2!=null&&listRootFile2.size()>0))
+              {
+                  rootElementFile2=getElement(listRootFile2, rootElement);
+                  /*If element exists in File 2 list add it to final list*/
+                  if(rootElementFile2!=null)
+                  {
+                      finalRootList.add(rootElementFile2);
+                      statusMerging = true;
+                  }
+                  /*If element does not exists in File 2 list break the loop as element was not found
+                  * in either of the lists*/
+                  else
+                  {
+                      statusMerging = false;
+                      Log.d(TAG, "-----getMergedRootList():NO_COMPARISON "+" (listRootFile1==null || listRootFile1.size()==0)&&(listRootFile2!=null&&listRootFile2.size()>0)");
+                      break OUTERLOOP;
+                  }
+
+
+              }
+              /*If File 2 list does not contain any element but File 1 list contains elements*/
+              else if ((listRootFile1!=null&&listRootFile1.size()>0)&&(listRootFile2==null&&listRootFile2.size()==0))
+              {
+                  rootElementFile1=getElement(listRootFile1,rootElement);
+                  /*If element exists in File 1 list add it to final list*/
+                  if(rootElementFile1!=null)
+                  {
+                      finalRootList.add(rootElementFile1);
+                      statusMerging = true;
+                  }
+                  /*If element does not exists in File 1 list break the loop as element was not found
+                  * in either of the lists*/
+                  else
+                  {
+                      statusMerging = false;
+                      Log.d(TAG, "-----getMergedRootList():NO_COMPARISON "+" (listRootFile1!=null&&listRootFile1.size()>0)&&(listRootFile2==null&&listRootFile2.size()==0)");
+                      break OUTERLOOP;
+                  }
+              }
+            }
+          }
+       }
 
 
         return finalRootList;
@@ -404,8 +579,8 @@ public class MainActivity extends ActionBarActivity {
 
     }
 //--------------------------------------------------------------------------------------------------
-    /*This element basically searches for a element searchElement in list listElements and returns
-    * the searched element from the list*/
+    /*This function searches for a element searchElement in list listElements and returns the
+      searched element from the list. If no element found it will return null object*/
     private RootElementPOJO getElement(List<RootElementPOJO> listElements,RootElementPOJO searchElement)
     {
         int l_i=0;
@@ -423,259 +598,75 @@ public class MainActivity extends ActionBarActivity {
 
 //--------------------------------------------------------------------------------------------------
 
-/* This method will compare the Root element List from both Asset file and SdCard File and will
-    create a final root element list to be written*/
+    /*This function will compare the two attribute values on the basis of comparison type and
+    * will the return the boolean result*/
+    public boolean compareAttributeValues(String attrValue1,String attrValue2,int comparisonType)
+    {
+        boolean result=false;
 
-    private List<RootElementPOJO> compareAndAddToListRoot(List<RootElementPOJO> listAssets,
-                                       List<RootElementPOJO> listSdCard,List<RootElementPOJO> listInitial) {
-
-        List<RootElementPOJO> finalRootList=new ArrayList<RootElementPOJO>();
-
-
-        /* If Attributes in Assets File list is greater than Sdcard file List
-           write Assets file Attribute to the final list */
-
-        if ((listSdCard != null && listAssets != null) && (listAssets.size() > listSdCard.size())) {
-            Log.d(TAG, "Assets list greater than sdcard");
-
-            int modeComparison=0;
-            RootElementPOJO rootElementAsset;
-            for(int counter=0;counter<listAssets.size();counter++)
-            {
-                rootElementAsset=listAssets.get(counter);
-                //get the mode whether element has to be pushed in final XML
-                modeComparison=initialParameterList.getModeComparison(rootElementAsset.getElementName());
-
-                //If the parameter has to be pushed in XML
-                if(modeComparison==ComparisonConstants.PUSH_XML)
+        switch (comparisonType)
+        {
+            /*Compare attribute Values for equality */
+            case ComparisonConstants.COMPARE_EQUAL:
+                if((attrValue1.trim()).equals(attrValue2.trim()))
                 {
-                    finalRootList.add(rootElementAsset);
+                    result=true;
+                }
+                break;
+
+            /*Compare attribute Values for value greater in File1 */
+            case ComparisonConstants.COMPARE_GREATER_FILE1:
+
+                if(((attrValue1.trim()).compareTo(attrValue2))>0)
+                {
+                    result=true;
                 }
 
-            }
-           // finalRootList = listAssets;
+                break;
+
+            /*Compare attribute Values for value greater in File2 */
+            case ComparisonConstants.COMPARE_GREATER_FILE2:
+
+                if(((attrValue2.trim()).compareTo(attrValue1))>0)
+                {
+                    result=true;
+                }
+
+                break;
+
+            /*Compare attribute Values for value greater or equal in File1 */
+            case ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1:
+
+                if(((attrValue1.trim()).compareTo(attrValue2))>=0)
+                {
+                    result=true;
+                }
+
+                break;
+
+            /*Compare attribute Values for value greater or equal in File2 */
+            case ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2:
+
+                if(((attrValue2.trim()).compareTo(attrValue1))>=0)
+                {
+                    result=true;
+                }
+
+                break;
+
+            default:
+
+                break;
+
         }
 
-         /* If Attributes in sdcard File list is greater than Assets file List
-           write sdcard file Attribute to the final list */
-
-        else if ((listSdCard != null && listAssets != null) && (listSdCard.size() > listAssets.size())) {
-            Log.d(TAG, "sdcard list greater than Assets");
-
-            int modeComparison=0;
-            RootElementPOJO rootElementSdCard;
-            for(int counter=0;counter<listSdCard.size();counter++)
-            {
-                rootElementSdCard=listSdCard.get(counter);
-                //get the mode whether element has to be pushed in final XML
-                modeComparison=initialParameterList.getModeComparison(rootElementSdCard.getElementName());
-
-                //If the parameter has to be pushed in XML
-                if(modeComparison==ComparisonConstants.PUSH_XML)
-                {
-                    finalRootList.add(rootElementSdCard);
-                }
-
-            }
-
-          //  finalRootList = listSdCard;
-        }
-        else{
-
-            /* If Attributes in sdcard File list and Assets file List are equal to initial root list
-               then iterate over the lists. If element has to be push in final Xml file
-                then check the file priority. If assets file priority is greater than assets file
-                then push assets list root attribute else push sdcard list root attribute */
-
-            if ((listSdCard != null && listAssets != null && listInitial != null) &&
-                    (listAssets.size() == listInitial.size() && listSdCard.size() == listInitial.size())) {
-
-                Log.d(TAG, "sdcard list equals than Assets  equals initial list size");
-
-                RootElementPOJO rootEleAssets;
-                RootElementPOJO rootEleSdCard;
-                RootElementPOJO rootEleInitial;
-
-                for (int count = 0; count < listSdCard.size(); count++) {
-                    rootEleAssets = listAssets.get(count);
-                    rootEleSdCard = listSdCard.get(count);
-                    rootEleInitial = listInitial.get(count);
-
-                    //get the mode whether element has to be pushed in final XML
-                    if (rootEleInitial.getModeOfComparison() == ComparisonConstants.PUSH_XML) {
-                        Log.d(TAG, "PUSH XML Case");
-
-                        // check the file priority
-                        if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
-                            Log.d(TAG, "ASSET File more priority");
-                            finalRootList.add(rootEleAssets);
-                        } else {
-                            Log.d(TAG, "SDcard File more priority");
-                            finalRootList.add(rootEleSdCard);
-                        }
-                    } else if (rootEleInitial.getModeOfComparison() == ComparisonConstants.PUSH_XML_NOT) {
-                        Log.d(TAG, "No PUSH XML Case");
-                    }
-
-                }
-
-
-            }
-            /* If size of assets root attribute list is equal to sdcard root attribute list but
-             both of them is not equal to initial root attribute list
-            */
-            else {
-                if ((listSdCard != null && listAssets != null) && (listSdCard.size() == listAssets.size())) {
-                    RootElementPOJO rootEleAssets;
-                    RootElementPOJO rootEleSdCard;
-                    RootElementPOJO rootEleInitial;
-
-                    Log.d(TAG, "sdcard list equals than Assets but not equals initial list size");
-
-                    for (int count = 0; count < listSdCard.size(); count++) {
-                        rootEleAssets = listAssets.get(count);
-                        rootEleSdCard = listSdCard.get(count);
-                        int modeComparison=0;
-
-                        // If the final Root attribute list does not contain any element
-                        if(finalRootList.size()==0)
-                        {
-                            /*If the name of elements in both file are same then check whether*/
-                            if(rootEleAssets.getElementName().equals(rootEleSdCard.getElementName()))
-                            {
-                                Log.d(TAG, "First elements of both list are same");
-                                modeComparison=initialParameterList.getModeComparison(rootEleAssets.getElementName());
-                                if ( modeComparison== ComparisonConstants.PUSH_XML) {
-                                    Log.d(TAG, "PUSH XML Case1");
-
-                                    // check the file priority
-                                    if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
-                                        Log.d(TAG, "ASSET File more priority1");
-                                        finalRootList.add(rootEleAssets);
-                                    } else {
-                                        Log.d(TAG, "SDcard File more priority1");
-                                        finalRootList.add(rootEleSdCard);
-                                    }
-                                } else if (modeComparison == ComparisonConstants.PUSH_XML_NOT) {
-                                    Log.d(TAG, "No PUSH XML Case1");
-                                }
-                            }
-                            /*If the name of elements are not same add both the elements after
-                            * then add both elements */
-                            else
-                            {
-                                modeComparison=initialParameterList.getModeComparison(rootEleAssets.getElementName());
-                                if ( modeComparison== ComparisonConstants.PUSH_XML) {
-                                    Log.d(TAG, "PUSH XML Case2");
-                                    finalRootList.add(rootEleAssets);
-                                }else if (modeComparison == ComparisonConstants.PUSH_XML_NOT) {
-                                    Log.d(TAG, "No PUSH XML Case2");
-                                }
-
-                                modeComparison=initialParameterList.getModeComparison(rootEleSdCard.getElementName());
-                                if ( modeComparison== ComparisonConstants.PUSH_XML) {
-                                    Log.d(TAG, "PUSH XML Case3");
-                                    finalRootList.add(rootEleSdCard);
-                                }else if (modeComparison == ComparisonConstants.PUSH_XML_NOT) {
-                                    Log.d(TAG, "No PUSH XML Case3");
-                                }
-                            }
-                        }
-
-                        /*If there are already some elements in the list then iterate over the list
-                        * to check whether current element exists in the list. If it exists then
-                        * check the file priority and update the element accordingly*/
-                        else {
-
-                            if(rootEleAssets.getElementName().equals(rootEleSdCard.getElementName()))
-                            {
-                                Log.d(TAG, "First elements of both list are same");
-                                modeComparison=initialParameterList.getModeComparison(rootEleAssets.getElementName());
-                                if ( modeComparison== ComparisonConstants.PUSH_XML) {
-                                    Log.d(TAG, "PUSH XML Case4");
-
-                                    // check the file priority
-                                    if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
-                                        Log.d(TAG, "ASSET File more priority4");
-                                        finalRootList.add(rootEleAssets);
-                                    } else {
-                                        Log.d(TAG, "SDcard File more priority4");
-                                        finalRootList.add(rootEleSdCard);
-                                    }
-                                } else if (modeComparison == ComparisonConstants.PUSH_XML_NOT) {
-                                    Log.d(TAG, "No PUSH XML Case4");
-                                }
-                            }
-                            /*Iterate over the list to check whether the current element exists. If
-                            * exists update the existing element in the list on the basis of file priority*/
-                            else{
-
-                                int itr=0;
-                                for (itr=0;itr<finalRootList.size();itr++)
-                                {
-                                    if(finalRootList.get(itr).getElementName().equals(rootEleAssets.getElementName()))
-                                    {
-                                        if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
-                                            Log.d(TAG, "ASSET File more priority4");
-
-                                            finalRootList.get(itr).setElementValue(rootEleAssets.getElementValue());
-
-                                            modeComparison=initialParameterList.getModeComparison(rootEleSdCard.getElementName());
-
-                                            if(modeComparison==ComparisonConstants.PUSH_XML){
-                                                finalRootList.add(rootEleSdCard);
-                                            }
-
-                                            break;
-                                        }
-                                    }
-                                     if(finalRootList.get(itr).getElementName().equals(rootEleSdCard.getElementName()))
-                                    {
-                                        if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE2) {
-                                            Log.d(TAG, "ASSET File more priority4");
-
-                                            finalRootList.get(itr).setElementValue(rootEleSdCard.getElementValue());
-
-                                            modeComparison=initialParameterList.getModeComparison(rootEleAssets.getElementName());
-
-                                            if(modeComparison==ComparisonConstants.PUSH_XML){
-                                                finalRootList.add(rootEleAssets);
-                                            }
-                                            break;
-                                        }
-                                    }
-
-                                }
-
-                                /*If no match found in list then add both the elements*/
-                                if(itr+1>finalRootList.size())
-                                {
-                                    Log.d(TAG, "outside loop. Adding both to final list");
-                                    modeComparison=initialParameterList.getModeComparison(rootEleAssets.getElementName());
-
-                                    if(modeComparison==ComparisonConstants.PUSH_XML){
-                                        finalRootList.add(rootEleAssets);
-                                    }
-
-                                    modeComparison=initialParameterList.getModeComparison(rootEleSdCard.getElementName());
-
-                                    if(modeComparison==ComparisonConstants.PUSH_XML){
-                                        finalRootList.add(rootEleSdCard);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-         }
-
-
-        return finalRootList;
-
-
+        return result;
     }
+
+
 //--------------------------------------------------------------------------------------------------
+
+// This function has been created for debugging purpose for printing the list of elements
    private void printRootList(List<RootElementPOJO> list)
    {
 
