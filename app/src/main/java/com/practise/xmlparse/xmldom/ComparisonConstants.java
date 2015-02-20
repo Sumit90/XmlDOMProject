@@ -40,17 +40,24 @@ public interface ComparisonConstants {
     * on file priority*/
     public static final int NO_COMPARISON=7;
 
-    // Constant to be used to tell that the given element is Root element
-    public static final int ELEMENT_ROOT=8;
-
-    // Constant to be used to tell that the given element is not a Root element
-    public static final int ELEMENT_NON_ROOT=9;
-
     /*Constant used to tell that File 1 is of higher priority */
-    public static final int PRIORITY_FILE1 =10;
+    public static final int PRIORITY_FILE1 =8;
 
     /*Constant used to tell that File 2 is of higher priority */
-    public static final int PRIORITY_FILE2 =11;
+    public static final int PRIORITY_FILE2 =9;
+
+    /*Constant to denote that a element is a Node element*/
+    public static final String NODE="N";
+
+    /*Constant to denote that a element contains attribute*/
+    public static final String ATTRIBUTE="A";
+
+    /*Constant to denote that a element contains only text*/
+    public static final String TEXT="T";
+
+    public static final String KEY="K";
+
+    public static final String VALUE="V";
 
 //TODO remove constants
     public static final int PUSH_XML =12;

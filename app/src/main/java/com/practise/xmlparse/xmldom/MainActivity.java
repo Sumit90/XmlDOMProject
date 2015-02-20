@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.Button;
 
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import java.io.FileNotFoundException;
@@ -43,6 +44,7 @@ public class MainActivity extends ActionBarActivity {
 
     private boolean statusMerging=false;
 
+    private WriteXmlFile writeFile;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,20 +61,23 @@ public class MainActivity extends ActionBarActivity {
                     if(init())
                     {
                         //get the root elements of the XML files
-                        Element rootElementAssetsFile = parseFile1.parseRootElement();
-                        Element rootElementSdCardFile = parseFile2.parseRootElement();
+                        Element rootElementFile1 = parseFile1.parseRootElement();
+                        Element rootElementFile2 = parseFile2.parseRootElement();
 
                         //add root parameters to list after comparing with initial root elements
-                        addRootParameters(ParameterListFile1,rootElementAssetsFile);
-                        addRootParameters(ParameterListFile2,rootElementSdCardFile);
+                        addRootParameters(ParameterListFile1,rootElementFile1);
+                        addRootParameters(ParameterListFile2,rootElementFile2);
 
                         printRootList(ParameterListFile1.getRootParameterList());
                         printRootList(ParameterListFile2.getRootParameterList());
 
-                        //get the final Root element Lists
-                        /*List<RootElementPOJO> finalRootElementList =compareAndAddToListRoot
-                                (ParameterListFile1.getRootParameterList(),ParameterListFile2.getRootParameterList(),
-                                        initialParameterList.getRootParameterList());*/
+                        //---print node element list---------------
+                        printRootList(ParameterListFile1.getNodeElementList());
+
+                        printRootList(ParameterListFile2.getNodeElementList());
+                        //---print node element list---------------
+
+
 
                         List<RootElementPOJO> finalRootElementList =getMergedRootList
                                                         (ParameterListFile1.getRootParameterList(),
@@ -87,8 +92,11 @@ public class MainActivity extends ActionBarActivity {
                             Log.d(TAG,"---------- print final list end-------------");
                             ParameterListFinal.setRootParameterList(finalRootElementList);
                             Log.d(TAG,"---------- Writing XML start-------------");
-                            WriteXmlFile writeFile = new WriteXmlFile(ParameterListFinal);
-                            writeFile.writeXml();
+                            writeFile = new WriteXmlFile(ParameterListFinal);
+                            //writeFile.writeXml();
+                            writeFile.writeRootElement();
+                            addNodeAttributes(rootElementFile1,rootElementFile2);
+                            writeFile.writeFinalXml();
                             Log.d(TAG,"---------- Writing Xml end-------------");
                         }
                         else
@@ -151,8 +159,8 @@ public class MainActivity extends ActionBarActivity {
 
             addInitialRootParameters("fastLogcodes",ComparisonConstants.COMPARE_EQUAL);
             addInitialRootParameters("fastLogcodes;A",ComparisonConstants.COMPARE_EQUAL);
-            addInitialRootParameters("fastLogcodes;B",ComparisonConstants.COMPARE_EQUAL);
-            addInitialRootParameters("fastLogcodes;C",ComparisonConstants.COMPARE_EQUAL);
+            addInitialNodeAttributes("Lte;A;B;N", ComparisonConstants.PICK_FROM_FILE1);
+            //addInitialNodeAttributes("Lte1;N", ComparisonConstants.PICK_FROM_FILE1);
 
 
             printRootList(initialParameterList.getRootParameterList());
@@ -204,7 +212,127 @@ public class MainActivity extends ActionBarActivity {
             initialParameterList.addInitialRootAttributes(new RootElementPOJO(attributeName, mode));
         }
 //--------------------------------------------------------------------------------------------------
+ //This function is used to add Initial Node attributes to be used for comparing and extracting
+    void addInitialNodeAttributes(String attributeName,int mode)
+    {
+        initialParameterList.addInitialNodeAttribute(new RootElementPOJO(attributeName, mode));
+    }
 
+//--------------------------------------------------------------------------------------------------
+    boolean addNodeAttributes(Element rootElementFile1,Element rootElementFile2)
+    {
+        boolean isSuccess=false;
+
+        //This will give the Tag name of Root Element in file 1
+        String rootTagNameFile1=rootElementFile1.getTagName();
+
+        //This will give the Tag name of Root Element in file 1
+        String rootTagNameFile2=rootElementFile2.getTagName();
+
+        if(!(rootTagNameFile1.equals(rootTagNameFile2)))
+        {
+            return isSuccess;
+        }
+
+        //Get all initial root attributes set by the user`
+        List<RootElementPOJO> initialNodes = initialParameterList.getNodeAttributeList();
+
+        RootElementPOJO nodeElement=null;
+        int mode=0;
+
+        LOOP_OUTER:for(int count=0;count<initialNodes.size();count++)
+        {
+            nodeElement =  initialNodes.get(count);
+            mode = nodeElement.getModeOfComparison();
+
+            //This string contains Root name,Element Name and Type of data it contains separated by
+            // deliminator
+            String nodeElementName=nodeElement.getElementName();
+            String []tagAttribute=nodeElementName.split(ComparisonConstants.DELIMINATOR);
+            String dataType=tagAttribute[tagAttribute.length-1];
+
+            if(dataType.equals(ComparisonConstants.NODE)) {
+
+
+
+                switch (mode) {
+
+                    case ComparisonConstants.PICK_FROM_FILE1:
+
+                        if(writeOnlyNodeCaseElements(rootElementFile1,tagAttribute))
+                        {
+                            isSuccess=true;
+                        }
+                        else {
+                            isSuccess=false;
+                            break LOOP_OUTER;
+                        }
+
+                        break;
+
+                    case ComparisonConstants.PICK_FROM_FILE2:
+
+                        if(writeOnlyNodeCaseElements(rootElementFile2,tagAttribute))
+                        {
+                            isSuccess=true;
+                        }
+                        else {
+                            isSuccess=false;
+                            break LOOP_OUTER;
+                        }
+
+
+                        break;
+                }
+            }
+
+        }
+
+        return isSuccess;
+    }
+
+    private boolean writeOnlyNodeCaseElements(Element rootElement,String [] tagAttribute)
+    {
+        NodeList nodeList=null;
+        Element nodeElement1=null;
+        Element nodeElement2=null;
+        boolean isSuccess=false;
+
+        nodeList=rootElement.getElementsByTagName(tagAttribute[0]);
+
+        if(nodeList!=null)
+        {
+            for (int nodeCount=0;nodeCount<nodeList.getLength();nodeCount++)
+            {
+                nodeElement1 = (Element)nodeList.item(nodeCount);
+                nodeElement1=writeFile.writeNodeToRoot(nodeElement1.getTagName());
+                if(nodeElement1!=null)
+                {
+                    for(int i=1;i<=tagAttribute.length-2;i++)
+                    {
+                        Element ele=writeFile.writeElementToNode(nodeElement1,tagAttribute[i]);
+                        if(ele!=null)
+                        {
+                            nodeElement1=ele;
+                        }
+                    }
+                    isSuccess=true;
+                }
+                else {
+
+                    isSuccess=false;
+                }
+
+            }
+
+        }
+
+        return isSuccess;
+
+    }
+
+
+//--------------------------------------------------------------------------------------------------
 //This function will add root attributes to root parameter list after comparing it with initial list
         void addRootParameters(ParametersList paramList,Element rootElement)
         {
@@ -334,7 +462,8 @@ public class MainActivity extends ActionBarActivity {
                     * in final list after checking which file has more priority*/
 
                  if (rootElementFile1 != null && rootElementFile2 != null) {
-                    // If mode of comparison check for equality of element values
+                    // If mode of comparison is compare for equal check for equality of element values
+//--------------------------------------------------------------------------------------------------
                     if (modeComparison == ComparisonConstants.COMPARE_EQUAL) {
                      /*Compare the attribute values of File1 and File2. If they are equal add it to
                         final list else exit the outer loop*/
@@ -358,6 +487,7 @@ public class MainActivity extends ActionBarActivity {
                         }
 
                     }
+//--------------------------------------------------------------------------------------------------
                      /*Check if the attribute value is greater in File1. If true add the attribute
                        from File1 */
                     else if (modeComparison == ComparisonConstants.COMPARE_GREATER_FILE1) {
@@ -372,6 +502,7 @@ public class MainActivity extends ActionBarActivity {
                             break OUTERLOOP;
                         }
                     }
+//--------------------------------------------------------------------------------------------------
                     /*Check if the attribute value is greater in File2. If true add the attribute
                      from File2 */
                     else if (modeComparison == ComparisonConstants.COMPARE_GREATER_FILE2) {
@@ -385,6 +516,7 @@ public class MainActivity extends ActionBarActivity {
                             break OUTERLOOP;
                         }
                     }
+//--------------------------------------------------------------------------------------------------
                     /*Check if the attribute value is greater or equal in File1. If true add the attribute
                       from File1 */
                     else if (modeComparison == ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1) {
@@ -398,6 +530,7 @@ public class MainActivity extends ActionBarActivity {
                             break OUTERLOOP;
                         }
                     }
+//--------------------------------------------------------------------------------------------------
 
                     /*Check if the attribute value is greater or equal in File2. If true add the attribute
                       from File2 */
@@ -412,7 +545,7 @@ public class MainActivity extends ActionBarActivity {
                             break OUTERLOOP;
                         }
                     }
-
+//--------------------------------------------------------------------------------------------------
 
                  }
                      /*If the required element not found in File2 then break the loop*/
@@ -485,7 +618,6 @@ public class MainActivity extends ActionBarActivity {
              /*If user has specified the mode of comparison to be NO_COMPARISON*/
             else if(modeComparison==ComparisonConstants.NO_COMPARISON)
             {
-
               /* If both the file list are non empty then check if the element exists in both the lists.
               */
               if((listRootFile1!=null&&listRootFile1.size()>0)&&(listRootFile2!=null&&listRootFile2.size()>0))

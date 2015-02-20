@@ -10,11 +10,17 @@ import java.util.List;
 //The class will contains the Lists for initial elements provided for Root element and other elements
 public class InitialParameterList {
 
+    //This will store the initial root attributes to be included
     private List<RootElementPOJO> initialRootAttributes;
+
+    private List<RootElementPOJO> initialNodeAttributes;
+
+
 //--------------------------------------------------------------------------------------------------
     public InitialParameterList()
     {
         initialRootAttributes =new ArrayList<RootElementPOJO>() ;
+        initialNodeAttributes=new ArrayList<RootElementPOJO>();
 
     }
 //--------------------------------------------------------------------------------------------------
@@ -27,6 +33,18 @@ public class InitialParameterList {
     {
         return initialRootAttributes;
     }
+
+//--------------------------------------------------------------------------------------------------
+    public void addInitialNodeAttribute(RootElementPOJO nodeElement)
+    {
+        initialNodeAttributes.add(nodeElement);
+    }
+
+//--------------------------------------------------------------------------------------------------
+    public List<RootElementPOJO> getNodeAttributeList()
+{
+    return initialNodeAttributes;
+}
 
 //--------------------------------------------------------------------------------------------------
     public int getModeComparison(String attributeName)

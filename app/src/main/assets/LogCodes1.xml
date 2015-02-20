@@ -1,3 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?><fastLogcodes  A="a " C="c " B="b" >
 
+    <Lte1 name="lte4">
+        <C/>
+        <D/>
+    </Lte1>
+
+    <Lte1 name="lte5">
+
+        <C/>
+        <D/>
+
+    </Lte1>
+
+    <Lte1 name="lte6">
+
+        <C/>
+        <D/>
+        
+    </Lte1>
+
 </fastLogcodes>

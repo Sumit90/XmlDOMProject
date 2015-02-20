@@ -64,9 +64,33 @@ public class WriteXmlFile {
 
     }
 
+    public void writeFinalXml() throws ParserConfigurationException
+    {
+        System.out.print("-----hello inside writeXml()----------");
+        try {
+
+                TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                Transformer transformer = transformerFactory.newTransformer();
+                DOMSource source = new DOMSource(document);
+
+                //StreamResult result = new StreamResult(new File("C:\\file.xml"));
+
+                // Output to console for testing
+                StreamResult result = new StreamResult(System.out);
+                transformer.transform(source, result);
+
+
+            System.out.print("-----hello done writeXml()----------");
+        }
+        catch (TransformerException ex) {
+            ex.printStackTrace();
+        }
+
+    }
+
 //--------------------------------------------------------------------------------------------------
     // This function is write the root element of the XML file and its attributes
-    private boolean writeRootElement() throws ParserConfigurationException
+    public boolean writeRootElement() throws ParserConfigurationException
     {
 
             int counter = 0;
@@ -106,4 +130,42 @@ public class WriteXmlFile {
     }
 
 //--------------------------------------------------------------------------------------------------
+
+    public Element writeNodeToRoot(String elementName)
+    {
+        Element nodeElement=null;
+        try {
+            if(document!=null && docRootElement!=null) {
+                 nodeElement = document.createElement(elementName);
+                docRootElement.appendChild(nodeElement);
+            }
+
+        }
+        catch(Exception ex)
+        {
+
+        }
+
+        return nodeElement;
+
+    }
+
+    public Element writeElementToNode(Element ele,String elementName)
+    {
+        Element element=null;
+        try {
+            if(document!=null && docRootElement!=null) {
+                element = document.createElement(elementName);
+                ele.appendChild(element);
+            }
+
+        }
+        catch(Exception ex)
+        {
+
+        }
+
+        return element;
+
+    }
 }

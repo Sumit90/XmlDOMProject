@@ -13,10 +13,15 @@ public class ParametersList {
     // This will contain the mandatory attribute list at root element
     private List<RootElementPOJO> rootAttributes;
 
+    // This will contain node elements
+    private List<RootElementPOJO> nodeElementList;
+
+
 //--------------------------------------------------------------------------------------------------
     public ParametersList()
     {
         rootAttributes =new ArrayList<RootElementPOJO>() ;
+        nodeElementList =new ArrayList<RootElementPOJO>() ;
 
     }
 //--------------------------------------------------------------------------------------------------
@@ -33,30 +38,23 @@ public class ParametersList {
     }
 //--------------------------------------------------------------------------------------------------
 
+//--------------------------------------------------------------------------------------------------
+    //Method used to add node  element to the List
+    public void addnodeElement(RootElementPOJO nodeElement)
+    {
+        nodeElementList.add(nodeElement);
+    }
+    //--------------------------------------------------------------------------------------------------
+//Method used to get rootAttributes List containing root elements
+    public List<RootElementPOJO> getNodeElementList()
+    {
+        return nodeElementList;
+    }
+    //--------------------------------------------------------------------------------------------------
     public void setRootParameterList(List<RootElementPOJO> rootParameterList)
     {
         rootAttributes=rootParameterList;
     }
-
-//--------------------------------------------------------------------------------------------------
-   /* public RootElementPOJO getRootParameter(String rootElementName)
-    {
-        RootElementPOJO elementPOJO=null;
-
-        for(int i=0;i<rootAttributes.size();i++)
-        {
-            elementPOJO=(RootElementPOJO)rootAttributes.get(i);
-            String []split=elementPOJO.getElementName().split(";");
-            if(elementPOJO.getElementName().equals(rootElementName))
-            {
-                break;
-            }
-        }
-
-        return elementPOJO;
-    }*/
-
-
 //--------------------------------------------------------------------------------------------------
 
 }
