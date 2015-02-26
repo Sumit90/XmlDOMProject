@@ -8,18 +8,19 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-
-import org.w3c.dom.Element;
+import org.kxml2.kdom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
 import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -43,8 +44,14 @@ public class MainActivity extends ActionBarActivity {
     private final String TAG="MYLOGS";
 
     private boolean statusMerging=false;
+    private boolean statusCheckNode=false;
 
     private WriteXmlFile writeFile;
+    private Element rootElementFile1;
+    private Element rootElementFile2;
+    private Element rootElementFinal;
+    private static int counter=0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,62 +65,71 @@ public class MainActivity extends ActionBarActivity {
             public void onClick(View v) {
                 try {
 
-                    if(init())
-                    {
+                    if (init()) {
                         //get the root elements of the XML files
-                        Element rootElementFile1 = parseFile1.parseRootElement();
-                        Element rootElementFile2 = parseFile2.parseRootElement();
+                        rootElementFile1 = parseFile1.parseRootElement();
+                        rootElementFile2 = parseFile2.parseRootElement();
 
-                        //add root parameters to list after comparing with initial root elements
-                        addRootParameters(ParameterListFile1,rootElementFile1);
-                        addRootParameters(ParameterListFile2,rootElementFile2);
+                        if (rootElementFile1 != null && rootElementFile2 != null) {
 
-                        printRootList(ParameterListFile1.getRootParameterList());
-                        printRootList(ParameterListFile2.getRootParameterList());
+                            //add root parameters to list after comparing with initial root elements
+                            addRootParameters(ParameterListFile1,rootElementFile1);
+                            addRootParameters(ParameterListFile2,rootElementFile2);
 
-                        //---print node element list---------------
-                        printRootList(ParameterListFile1.getNodeElementList());
+                            printRootList(ParameterListFile1.getRootParameterList());
+                            printRootList(ParameterListFile2.getRootParameterList());
 
-                        printRootList(ParameterListFile2.getNodeElementList());
-                        //---print node element list---------------
+                            //---print node element list---------------
+                            printRootList(ParameterListFile1.getNodeElementList());
 
-
-
-                        List<RootElementPOJO> finalRootElementList =getMergedRootList
-                                                        (ParameterListFile1.getRootParameterList(),
-                                                            ParameterListFile2.getRootParameterList(),
-                                                             initialParameterList.getRootParameterList());
+                            printRootList(ParameterListFile2.getNodeElementList());
+                            //---print node element list---------------
 
 
-                        if(finalRootElementList!=null && statusMerging)
-                        {
-                            Log.d(TAG,"---------- print final list start-------------");
-                            printRootList(finalRootElementList);
-                            Log.d(TAG,"---------- print final list end-------------");
-                            ParameterListFinal.setRootParameterList(finalRootElementList);
-                            Log.d(TAG,"---------- Writing XML start-------------");
-                            writeFile = new WriteXmlFile(ParameterListFinal);
-                            //writeFile.writeXml();
-                            writeFile.writeRootElement();
-                            addNodeAttributes(rootElementFile1,rootElementFile2);
-                            writeFile.writeFinalXml();
-                            Log.d(TAG,"---------- Writing Xml end-------------");
+
+                            List<RootElementPOJO> finalRootElementList =getMergedRootList
+                                    (ParameterListFile1.getRootParameterList(),
+                                            ParameterListFile2.getRootParameterList(),
+                                            initialParameterList.getInitialRootList());
+
+
+                            if(finalRootElementList!=null && statusMerging)
+                            {
+                                /*Log.d(TAG,"---------- print final list start-------------");
+                                printRootList(finalRootElementList);
+                                Log.d(TAG,"---------- print final list end-------------");*/
+
+                                ParameterListFinal.setRootParameterList(finalRootElementList);
+                                Log.d(TAG,"---------- Writing XML start-------------");
+
+                                writeFile = new WriteXmlFile(ParameterListFinal,fileParameterPOJO);
+
+                                if(writeFile.writeRootElement())
+                                {
+                                    rootElementFinal=writeFile.getDocRootElement();
+
+                                    if(writeNodesToXml(rootElementFile1,rootElementFile2,rootElementFinal))
+                                    {
+                                        writeFile.printXml();
+                                    }
+                                    else
+                                    {
+                                        Log.d(TAG,"Error while adding nodes writeNodesToXml");
+                                    }
+
+                                }
+
+
+                                Log.d(TAG,"---------- Writing Xml end-------------");
+                            }
+                            else
+                            {
+                                Log.d(TAG,"-------Cannot write the XML File-----------------");
+                            }
+
                         }
-                        else
-                        {
-                            Log.d(TAG,"-------Cannot write the XML File-----------------");
-                        }
-
-
                     }
-
                 }
-
-                /*catch (ParserConfigurationException e)
-                {
-                    Log.d(TAG,"inside ParserConfigurationException");
-                    e.printStackTrace();
-                }*/
 
                 catch (Exception e) {
 
@@ -149,7 +165,7 @@ public class MainActivity extends ActionBarActivity {
             parseFile2 =  new XmlParser(inputStreamFile2);
 
             fileParameterPOJO=new FileParameterPOJO(inputStreamFile1,inputStreamFile2
-                    ,ComparisonConstants.PRIORITY_FILE1,"LogCodes.xml","",true);
+                    ,ComparisonConstants.PRIORITY_FILE2,"LogCodes.xml","/sdcard/FTA/Log/",true);
 
             initialParameterList=new InitialParameterList();
 
@@ -158,12 +174,21 @@ public class MainActivity extends ActionBarActivity {
             ParameterListFinal=new ParametersList();
 
             addInitialRootParameters("fastLogcodes",ComparisonConstants.COMPARE_EQUAL);
-            addInitialRootParameters("fastLogcodes;A",ComparisonConstants.COMPARE_EQUAL);
-            addInitialNodeAttributes("Lte;A;B;N", ComparisonConstants.PICK_FROM_FILE1);
+            addInitialRootParameters("fastLogcodes@A",ComparisonConstants.COMPARE_EQUAL);
+            addInitialRootParameters("fastLogcodes@B",ComparisonConstants.COMPARE_EQUAL);
+            addInitialRootParameters("fastLogcodes@C",ComparisonConstants.COMPARE_EQUAL);
+
+            addInitialNodeParameters("","","","","fastLogcodes",
+                    null,ComparisonConstants.NODE,ComparisonConstants.NO_COMPARISON,"fastLogcodes/Lte");
+
+            addInitialNodeParameters("","","","","fastLogcodes",
+                    null,ComparisonConstants.NODE,ComparisonConstants.NO_COMPARISON,"fastLogcodes/Lte1");
+
+            //addInitialNodeAttributes("Lte;A;B;N", ComparisonConstants.PICK_FROM_FILE1);
             //addInitialNodeAttributes("Lte1;N", ComparisonConstants.PICK_FROM_FILE1);
 
 
-            printRootList(initialParameterList.getRootParameterList());
+            printRootList(initialParameterList.getInitialRootList());
 
             isInitSuccess=true;
         }
@@ -182,10 +207,10 @@ public class MainActivity extends ActionBarActivity {
             ex.printStackTrace();
 
         }
-        catch (ParserConfigurationException e)
+        catch (XmlPullParserException e)
         {
             isInitSuccess=false;
-            Log.d(TAG,"inside init ParserConfigurationException");
+            Log.d(TAG,"inside init XmlPullParserException");
             e.printStackTrace();
         }
         catch (SAXException e)
@@ -209,127 +234,20 @@ public class MainActivity extends ActionBarActivity {
 //This function is used to add Initial Root attributes to be used for comparing and extracting
         void addInitialRootParameters(String attributeName,int mode)
         {
-            initialParameterList.addInitialRootAttributes(new RootElementPOJO(attributeName, mode));
+            initialParameterList.addInitialRoot(new RootElementPOJO(attributeName, mode));
         }
 //--------------------------------------------------------------------------------------------------
- //This function is used to add Initial Node attributes to be used for comparing and extracting
-    void addInitialNodeAttributes(String attributeName,int mode)
-    {
-        initialParameterList.addInitialNodeAttribute(new RootElementPOJO(attributeName, mode));
-    }
+//This function is used to add Initial Node attributes to be used for comparing and extracting
+void addInitialNodeParameters(String keyChildName,String keyChildValue,String valueChildName,
+                              String valueChildValue, String parentReferenceAddress,
+                              Node parentReferenceNode,String nodeType, int modeOfComparison,
+                              String elementName )
+{
+    initialParameterList.addInitialNodeAttribute(new NodeElementPOJO(keyChildName,keyChildValue,
+            valueChildName,valueChildValue,parentReferenceAddress,parentReferenceNode,nodeType,
+            modeOfComparison,null,elementName));
 
-//--------------------------------------------------------------------------------------------------
-    boolean addNodeAttributes(Element rootElementFile1,Element rootElementFile2)
-    {
-        boolean isSuccess=false;
-
-        //This will give the Tag name of Root Element in file 1
-        String rootTagNameFile1=rootElementFile1.getTagName();
-
-        //This will give the Tag name of Root Element in file 1
-        String rootTagNameFile2=rootElementFile2.getTagName();
-
-        if(!(rootTagNameFile1.equals(rootTagNameFile2)))
-        {
-            return isSuccess;
-        }
-
-        //Get all initial root attributes set by the user`
-        List<RootElementPOJO> initialNodes = initialParameterList.getNodeAttributeList();
-
-        RootElementPOJO nodeElement=null;
-        int mode=0;
-
-        LOOP_OUTER:for(int count=0;count<initialNodes.size();count++)
-        {
-            nodeElement =  initialNodes.get(count);
-            mode = nodeElement.getModeOfComparison();
-
-            //This string contains Root name,Element Name and Type of data it contains separated by
-            // deliminator
-            String nodeElementName=nodeElement.getElementName();
-            String []tagAttribute=nodeElementName.split(ComparisonConstants.DELIMINATOR);
-            String dataType=tagAttribute[tagAttribute.length-1];
-
-            if(dataType.equals(ComparisonConstants.NODE)) {
-
-
-
-                switch (mode) {
-
-                    case ComparisonConstants.PICK_FROM_FILE1:
-
-                        if(writeOnlyNodeCaseElements(rootElementFile1,tagAttribute))
-                        {
-                            isSuccess=true;
-                        }
-                        else {
-                            isSuccess=false;
-                            break LOOP_OUTER;
-                        }
-
-                        break;
-
-                    case ComparisonConstants.PICK_FROM_FILE2:
-
-                        if(writeOnlyNodeCaseElements(rootElementFile2,tagAttribute))
-                        {
-                            isSuccess=true;
-                        }
-                        else {
-                            isSuccess=false;
-                            break LOOP_OUTER;
-                        }
-
-
-                        break;
-                }
-            }
-
-        }
-
-        return isSuccess;
-    }
-
-    private boolean writeOnlyNodeCaseElements(Element rootElement,String [] tagAttribute)
-    {
-        NodeList nodeList=null;
-        Element nodeElement1=null;
-        Element nodeElement2=null;
-        boolean isSuccess=false;
-
-        nodeList=rootElement.getElementsByTagName(tagAttribute[0]);
-
-        if(nodeList!=null)
-        {
-            for (int nodeCount=0;nodeCount<nodeList.getLength();nodeCount++)
-            {
-                nodeElement1 = (Element)nodeList.item(nodeCount);
-                nodeElement1=writeFile.writeNodeToRoot(nodeElement1.getTagName());
-                if(nodeElement1!=null)
-                {
-                    for(int i=1;i<=tagAttribute.length-2;i++)
-                    {
-                        Element ele=writeFile.writeElementToNode(nodeElement1,tagAttribute[i]);
-                        if(ele!=null)
-                        {
-                            nodeElement1=ele;
-                        }
-                    }
-                    isSuccess=true;
-                }
-                else {
-
-                    isSuccess=false;
-                }
-
-            }
-
-        }
-
-        return isSuccess;
-
-    }
+}
 
 
 //--------------------------------------------------------------------------------------------------
@@ -337,9 +255,9 @@ public class MainActivity extends ActionBarActivity {
         void addRootParameters(ParametersList paramList,Element rootElement)
         {
            //This will give the Tag name of Root Element
-            String rootTagName=rootElement.getTagName();
+            String rootTagName=rootElement.getName();
             //Get all initial root attributes set by the user
-            List<RootElementPOJO> initialRootParams = initialParameterList.getRootParameterList();
+            List<RootElementPOJO> initialRootParams = initialParameterList.getInitialRootList();
 
             RootElementPOJO rootElementPOJO=null;
 
@@ -355,7 +273,7 @@ public class MainActivity extends ActionBarActivity {
                 String rootElementName=rootElementPOJO.getElementName();
 
                 //0th index contains tag name and 1st contains actual attribute name
-                String []tagAttribute=rootElementName.split(ComparisonConstants.DELIMINATOR);
+                String []tagAttribute=rootElementName.split(ComparisonConstants.DELIMINATOR_ATTRIBUTE);
 
                 // If tag name for root in initial list and root element matches
                 if(tagAttribute[0].equals(rootTagName))
@@ -366,7 +284,8 @@ public class MainActivity extends ActionBarActivity {
                       /*Get the attribute value for attribute name given by initial root element list
                       after splitting (tagAttribute[1]) . tagAttribute[0] gives root tag name
                       */
-                       String attributeValue=rootElement.getAttribute(tagAttribute[1]);
+                       String attributeValue=rootElement.getAttributeValue(XmlPullParser.NO_NAMESPACE,
+                                                                                        tagAttribute[1]);
 
                     /* If the attribute exists in Root element create a RootPOJO object and add
                     * it to the list*/
@@ -710,7 +629,298 @@ public class MainActivity extends ActionBarActivity {
 
 
     }
-//--------------------------------------------------------------------------------------------------
+
+    private boolean writeNodesToXml(Element rootElementFile1,Element rootElementFile2,Element rootElementFinal)
+    {
+        boolean isWriteSuccess=false;
+
+
+        //Get all initial Node attributes set by the user
+        List<NodeElementPOJO> initialNodes = initialParameterList.getInitialNodeAttributeList();
+
+        NodeElementPOJO nodeElementPOJO=null;
+
+        String keyChildName="";
+        String keyChildValue="";
+        String valueChildName="";
+        String valueChildValue="";
+        String parentReferenceAddress="";
+        Node parentReferenceNode=null;
+        String elementType="";
+        int modeOfComparison=0;
+        NodeList nodeList=null;
+        String elementName="";
+
+        OUTER_LOOP:for (int count=0;count<initialNodes.size();count++) {
+
+            nodeElementPOJO = initialNodes.get(count);
+
+            elementType=nodeElementPOJO.getElementType();
+            keyChildName=nodeElementPOJO.getKeyChildName();
+            keyChildValue=nodeElementPOJO.getKeyChildValue();
+            valueChildName=nodeElementPOJO.getValueChildName();
+            valueChildValue=nodeElementPOJO.getValueChildValue();
+            parentReferenceAddress=nodeElementPOJO.getParentReferenceAddress();
+            parentReferenceNode=nodeElementPOJO.getParentReferenceNode();
+            modeOfComparison=nodeElementPOJO.getModeOfComparison();
+            elementName=nodeElementPOJO.getElementName();
+
+            if(!(elementType.equals(ComparisonConstants.NODE)||
+                    elementType.equals(ComparisonConstants.ATTRIBUTE)||
+                    elementType.equals(ComparisonConstants.TEXT)||
+                    elementType.equals(ComparisonConstants.KEY_ATTRIBUTE)||
+                    elementType.equals(ComparisonConstants.KEY_TEXT)||
+                    elementType.equals(ComparisonConstants.VALUE)||
+                    elementType.equals(ComparisonConstants.ATTRIBUTE_TEXT)))
+            {
+                Log.d(TAG,"[addNodesToList]: break loop---- element type wrong main-----");
+                break OUTER_LOOP;
+            }
+
+
+            switch (elementType)
+            {
+                case ComparisonConstants.NODE:
+
+                    String []getElementNames=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
+
+                     if(getElementNames.length<2)
+                     {
+                         isWriteSuccess=false;
+                         Log.d(TAG,"writeNodesToXml:[getElementNames.length<2]: break loop---------");
+                         break OUTER_LOOP;
+                     }
+
+
+                    if(modeOfComparison==ComparisonConstants.NO_COMPARISON)
+                    {
+                        if(fileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
+                        {
+                            if(addFullNodeToRoot(rootElementFile1, getElementNames[1], rootElementFinal)){
+
+                                isWriteSuccess=true;
+                            }
+                            else
+                            {
+                                isWriteSuccess=false;
+                                Log.d(TAG,"writeNodesToXml:[NO_COMPARISON][PRIORITY_FILE1]: break loop---------");
+                                break OUTER_LOOP;
+                            }
+
+                        }else {
+
+                            if(addFullNodeToRoot(rootElementFile2, getElementNames[1], rootElementFinal)){
+
+                                isWriteSuccess=true;
+                            }
+                            else
+                            {
+                                isWriteSuccess=false;
+                                Log.d(TAG,"writeNodesToXml:[NO_COMPARISON][PRIORITY_FILE1]: break loop---------");
+                                break OUTER_LOOP;
+                            }
+
+
+                        }
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE1)
+                    {
+
+                        if(addFullNodeToRoot(rootElementFile1, getElementNames[1], rootElementFinal)){
+
+                            isWriteSuccess=true;
+                        }
+                        else
+                        {
+                            isWriteSuccess=false;
+                            Log.d(TAG,"writeNodesToXml:[NO_COMPARISON][PRIORITY_FILE1]: break loop---------");
+                            break OUTER_LOOP;
+                        }
+
+
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE2)
+                    {
+                        if(addFullNodeToRoot(rootElementFile2, getElementNames[1], rootElementFinal)){
+
+                            isWriteSuccess=true;
+                        }
+                        else
+                        {
+                            isWriteSuccess=false;
+                            Log.d(TAG,"writeNodesToXml:[NO_COMPARISON][PRIORITY_FILE1]: break loop---------");
+                            break OUTER_LOOP;
+                        }
+
+
+                    }else{
+
+                        isWriteSuccess=false;
+                        Log.d(TAG,"writeNodesToXml:[NODE]: break loop---- element type wrong NODE-----");
+                        break OUTER_LOOP;
+
+                    }
+
+                    break;
+
+
+                case ComparisonConstants.ATTRIBUTE:
+
+
+                    if(modeOfComparison==ComparisonConstants.NO_COMPARISON)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE1)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE2)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.COMPARE_EQUAL)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_FILE1)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_FILE2)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2)
+                    {
+
+                    }
+
+
+                    break;
+
+                case ComparisonConstants.TEXT:
+
+
+                    if(modeOfComparison==ComparisonConstants.NO_COMPARISON)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE1)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE2)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.COMPARE_EQUAL)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_FILE1)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_FILE2)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1)
+                    {
+
+                    }
+                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2)
+                    {
+
+                    }
+
+                    break;
+            }
+
+        }
+        return isWriteSuccess;
+
+
+    }
+
+    private boolean addFullNodeToRoot(Element mainElement, String nameOfElement, Element finalElement)
+    {
+        boolean isSuccessAppend=true;
+
+        try
+        {
+            for(int counter=0;counter<mainElement.getChildCount();counter++)
+            {
+                Element element = mainElement.getElement(counter);
+                if(element!=null && element.getName().equals(nameOfElement))
+                {
+                    finalElement.addChild(org.kxml2.kdom.Node.ELEMENT,element);
+                    isSuccessAppend=true;
+                }
+
+            }
+
+
+        }
+        catch (Exception e)
+        {
+            isSuccessAppend=false;
+            e.printStackTrace();
+
+        }
+        return isSuccessAppend;
+
+    }
+
+
+
+    private boolean addNode(Element mainElement,String elementAddress,Element finalElement)
+    {
+
+        boolean isElementExists=false;
+
+        String [] splitElementNames=elementAddress.split(ComparisonConstants.ABSOLUTE_PATH);
+        int length=splitElementNames.length;
+        try {
+
+            while(counter<length)
+            {
+                for(int i=0;i<mainElement.getChildCount();i++)
+                {
+
+                    Element element = mainElement.getElement("",splitElementNames[i]);
+
+                    if(element!=null && element.getName().equals(splitElementNames[length-1]))
+                    {
+                        finalElement.addChild(org.kxml2.kdom.Node.ELEMENT,element);
+                        isElementExists=true;
+                    }
+
+                }
+
+                counter++;
+            }
+
+
+
+        }
+        catch (Exception e)
+        {
+            isElementExists=false;
+            e.printStackTrace();
+        }
+
+
+        return isElementExists;
+    }
+    //--------------------------------------------------------------------------------------------------
     /*This function searches for a element searchElement in list listElements and returns the
       searched element from the list. If no element found it will return null object*/
     private RootElementPOJO getElement(List<RootElementPOJO> listElements,RootElementPOJO searchElement)

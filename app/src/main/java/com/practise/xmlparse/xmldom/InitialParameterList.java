@@ -1,5 +1,8 @@
 package com.practise.xmlparse.xmldom;
 
+import com.practise.xmlparse.xmldom.NodeElementPOJO;
+import com.practise.xmlparse.xmldom.RootElementPOJO;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,48 +14,48 @@ import java.util.List;
 public class InitialParameterList {
 
     //This will store the initial root attributes to be included
-    private List<RootElementPOJO> initialRootAttributes;
+    private List<RootElementPOJO> initialRootList;
 
-    private List<RootElementPOJO> initialNodeAttributes;
+    private List<NodeElementPOJO> initialNodeList;
 
 
-//--------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------
     public InitialParameterList()
     {
-        initialRootAttributes =new ArrayList<RootElementPOJO>() ;
-        initialNodeAttributes=new ArrayList<RootElementPOJO>();
+        initialRootList =new ArrayList<RootElementPOJO>() ;
+        initialNodeList =new ArrayList<NodeElementPOJO>();
 
     }
-//--------------------------------------------------------------------------------------------------
-    public void addInitialRootAttributes(RootElementPOJO rootElement)
+    //--------------------------------------------------------------------------------------------------
+    public void addInitialRoot(RootElementPOJO rootElement)
     {
-        initialRootAttributes.add(rootElement);
+        initialRootList.add(rootElement);
     }
-//--------------------------------------------------------------------------------------------------
-    public List<RootElementPOJO> getRootParameterList()
+    //--------------------------------------------------------------------------------------------------
+    public List<RootElementPOJO> getInitialRootList()
     {
-        return initialRootAttributes;
+        return initialRootList;
     }
 
-//--------------------------------------------------------------------------------------------------
-    public void addInitialNodeAttribute(RootElementPOJO nodeElement)
+    //--------------------------------------------------------------------------------------------------
+    public void addInitialNodeAttribute(NodeElementPOJO nodeElement)
     {
-        initialNodeAttributes.add(nodeElement);
+        initialNodeList.add(nodeElement);
     }
 
-//--------------------------------------------------------------------------------------------------
-    public List<RootElementPOJO> getNodeAttributeList()
-{
-    return initialNodeAttributes;
-}
+    //--------------------------------------------------------------------------------------------------
+    public List<NodeElementPOJO> getInitialNodeAttributeList()
+    {
+        return initialNodeList;
+    }
 
-//--------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------
     public int getModeComparison(String attributeName)
     {
         int mode=0;
-        for(int count=0;count<initialRootAttributes.size();count++)
+        for(int count=0;count< initialRootList.size();count++)
         {
-            RootElementPOJO rootElementPOJO=initialRootAttributes.get(count);
+            RootElementPOJO rootElementPOJO= initialRootList.get(count);
             if(rootElementPOJO.getElementName().equals(attributeName))
             {
                 mode=rootElementPOJO.getModeOfComparison();

@@ -40,7 +40,7 @@ public class ParametersList {
 
 //--------------------------------------------------------------------------------------------------
     //Method used to add node  element to the List
-    public void addnodeElement(RootElementPOJO nodeElement)
+    public void addNodeElement(RootElementPOJO nodeElement)
     {
         nodeElementList.add(nodeElement);
     }

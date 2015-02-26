@@ -6,23 +6,30 @@ package com.practise.xmlparse.xmldom;
  * This file consists of an Interface that have constants, that will be used across the source for
  * comparing and merging of the Xml files .
  */
+
 public interface ComparisonConstants {
 
- //The deliminator to be used for separating the strings
+    //The deliminator to be used for separating the strings
     public static final  String DELIMINATOR=";";
 
-  //Constant to be used to tell that a specific attribute has to be taken from File1
+    //The deliminator to be used for Referencing Absolute Path(Path starting from root)
+    public static final  String ABSOLUTE_PATH="/";
+
+    //The deliminator to be used for Attributes
+    public static final  String DELIMINATOR_ATTRIBUTE="@";
+
+    //Constant to be used to tell that a specific attribute has to be taken from File1
     public static final int PICK_FROM_FILE1=0;
 
-  //Constant to be used to tell that a specific attribute has to be taken from File2
+    //Constant to be used to tell that a specific attribute has to be taken from File2
     public static final int PICK_FROM_FILE2=1;
 
-  //Constant to be used to tell that a specific attribute is to be compared in both files for equality
+    //Constant to be used to tell that a specific attribute is to be compared in both files for equality
     public static final int COMPARE_EQUAL=2;
 
     /*Constant to be used to tell that a specific attribute is to be compared in both files with
   * value to be greater in File1*/
-     public static final int COMPARE_GREATER_FILE1=3;
+    public static final int COMPARE_GREATER_FILE1=3;
 
     /*Constant to be used to tell that a specific attribute is to be compared in both files with
       * value to be greater in File2*/
@@ -55,13 +62,16 @@ public interface ComparisonConstants {
     /*Constant to denote that a element contains only text*/
     public static final String TEXT="T";
 
-    public static final String KEY="K";
+    /*Constant to denote that a element contains attribute and text both*/
+    public static final String ATTRIBUTE_TEXT="AT";
+
+    public static final String KEY_ATTRIBUTE="KA";
+
+    public static final String KEY_TEXT="KT";
 
     public static final String VALUE="V";
 
-//TODO remove constants
-    public static final int PUSH_XML =12;
-    public static final int PUSH_XML_NOT =13;
+
 
 
 

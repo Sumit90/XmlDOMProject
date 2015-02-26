@@ -1,20 +1,26 @@
 package com.practise.xmlparse.xmldom;
 
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import android.util.Log;
+import android.util.Xml;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
+import org.kxml2.io.KXmlSerializer;
+import org.kxml2.kdom.Document;
+import org.kxml2.kdom.Element;
+import org.kxml2.kdom.Node;
+import org.xmlpull.v1.XmlSerializer;
 
 /**
  * Created by e00959 on 2/6/2015.
@@ -24,67 +30,18 @@ import javax.xml.transform.stream.StreamResult;
 public class WriteXmlFile {
 
     private ParametersList parametersList;
-    private DocumentBuilderFactory documentBuilderFactory;
-    private DocumentBuilder documentBuilder;
     private Document document;
     private Element docRootElement;
+    private FileParameterPOJO fileParameterPOJO;
+    private static final String TAG="WriteXmlFile";
+
 //--------------------------------------------------------------------------------------------------
     //Parameterised constructor to set and get ParameterList object
-    public WriteXmlFile(ParametersList parametersList) throws ParserConfigurationException
+    public WriteXmlFile(ParametersList parametersList,FileParameterPOJO fileParameterPOJO)
     {
         this.parametersList=parametersList;
-        documentBuilderFactory=DocumentBuilderFactory.newInstance();
-        documentBuilder=documentBuilderFactory.newDocumentBuilder();
-        document=documentBuilder.newDocument();
-    }
-//--------------------------------------------------------------------------------------------------
-    public void writeXml() throws ParserConfigurationException
-    {
-        System.out.print("-----hello inside writeXml()----------");
-        try {
-            if (writeRootElement()) {
-
-                TransformerFactory transformerFactory = TransformerFactory.newInstance();
-                Transformer transformer = transformerFactory.newTransformer();
-                DOMSource source = new DOMSource(document);
-
-                //StreamResult result = new StreamResult(new File("C:\\file.xml"));
-
-                // Output to console for testing
-                 StreamResult result = new StreamResult(System.out);
-                 transformer.transform(source, result);
-
-            }
-
-            System.out.print("-----hello done writeXml()----------");
-        }
-        catch (TransformerException ex) {
-            ex.printStackTrace();
-        }
-
-    }
-
-    public void writeFinalXml() throws ParserConfigurationException
-    {
-        System.out.print("-----hello inside writeXml()----------");
-        try {
-
-                TransformerFactory transformerFactory = TransformerFactory.newInstance();
-                Transformer transformer = transformerFactory.newTransformer();
-                DOMSource source = new DOMSource(document);
-
-                //StreamResult result = new StreamResult(new File("C:\\file.xml"));
-
-                // Output to console for testing
-                StreamResult result = new StreamResult(System.out);
-                transformer.transform(source, result);
-
-
-            System.out.print("-----hello done writeXml()----------");
-        }
-        catch (TransformerException ex) {
-            ex.printStackTrace();
-        }
+        this.fileParameterPOJO=fileParameterPOJO;
+        document= new Document();
 
     }
 
@@ -103,16 +60,16 @@ public class WriteXmlFile {
 
             for (int count = 0; count < rootElementPOJOList.size(); count++) {
                 RootElementPOJO rootElement = rootElementPOJOList.get(count);
-                String[] splitTagAttribute = rootElement.getElementName().split(ComparisonConstants.DELIMINATOR);
+                String[] splitTagAttribute = rootElement.getElementName().split(ComparisonConstants.DELIMINATOR_ATTRIBUTE);
 
                 //If the length after split is greater than 1 just add attributes to the root element
                 if (splitTagAttribute.length > 1) {
-                    createAttribute(splitTagAttribute[1], rootElement.getElementValue(), docRootElement);
+                    setAttribute(splitTagAttribute[1], rootElement.getElementValue(), docRootElement);
                 }
                 // If the length after split is equal to 1 add root element tag. This will run only once.
                 else {
-                    docRootElement = document.createElement(splitTagAttribute[0]);
-                    document.appendChild(docRootElement);
+                    docRootElement = document.createElement("",splitTagAttribute[0]);
+                    document.addChild(Node.ELEMENT,docRootElement);
                 }
 
             }
@@ -122,50 +79,82 @@ public class WriteXmlFile {
     }
 //--------------------------------------------------------------------------------------------------
     //This function will create an attribute and will append it to the element passed
-    private void createAttribute(String attributeName,String attributeValue,Element element)
+    private void setAttribute(String attributeName, String attributeValue, Element element)
     {
-        Attr rootElementAttribute   =   document.createAttribute(attributeName);
-        rootElementAttribute.setValue(attributeValue);
-        element.setAttributeNode(rootElementAttribute);
+        element.setAttribute("",attributeName,attributeValue);
     }
 
 //--------------------------------------------------------------------------------------------------
 
-    public Element writeNodeToRoot(String elementName)
+    public Element getDocRootElement()
     {
-        Element nodeElement=null;
-        try {
-            if(document!=null && docRootElement!=null) {
-                 nodeElement = document.createElement(elementName);
-                docRootElement.appendChild(nodeElement);
-            }
-
-        }
-        catch(Exception ex)
+        if (docRootElement!=null)
         {
-
+            return docRootElement;
         }
 
-        return nodeElement;
-
+        return null;
     }
 
-    public Element writeElementToNode(Element ele,String elementName)
+    public void printXml() throws IOException
     {
-        Element element=null;
-        try {
-            if(document!=null && docRootElement!=null) {
-                element = document.createElement(elementName);
-                ele.appendChild(element);
+
+            if (docRootElement != null) {
+                XmlSerializer xmlWriter = new KXmlSerializer();
+                if (fileParameterPOJO.isWriteXml()) {
+
+                    File sdCardPathDirectory = createNewDirectory(fileParameterPOJO.getFinalFilePath());
+
+                    if (sdCardPathDirectory!=null && sdCardPathDirectory.canWrite()) {
+
+                        File file = new File(sdCardPathDirectory, fileParameterPOJO.getFinalFileName());
+                        OutputStream outputStream = new FileOutputStream(file);
+                        xmlWriter.setOutput(outputStream, null);
+
+                        if (xmlWriter != null) {
+
+                            Log.d(TAG, "-----write file start-----");
+                            document.write(xmlWriter);
+                            xmlWriter.flush();
+                            Log.d(TAG, "-----file written-----");
+                            xmlWriter = null;
+                            outputStream.close();
+                            outputStream = null;
+
+                            Log.d(TAG, "-----write file end-----");
+                        }
+
+                    }
+                    else
+                    {
+                        Log.d(TAG, "-----cannot write.Sdcard not available-----");
+                    }
+
+                } else {
+
+
+
+                }
             }
-
-        }
-        catch(Exception ex)
-        {
-
         }
 
-        return element;
 
+    private File createNewDirectory(String createNewFolder) {
+
+        // make directory
+        File NewDirectory;
+        NewDirectory = new File(createNewFolder);
+        if (!NewDirectory.exists()) {
+            boolean success = NewDirectory.mkdirs();
+            if (!success) {
+                Log.d(TAG, "mkdirs opn failed");
+                return null;
+            }
+            return NewDirectory;
+        }
+
+        return NewDirectory;
     }
+
+
 }

@@ -1,15 +1,18 @@
 package com.practise.xmlparse.xmldom;
 
 
-import org.w3c.dom.Document;
+
 import org.xml.sax.SAXException;
-import org.w3c.dom.Element;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
+
+import org.kxml2.io.KXmlParser;
+import org.kxml2.kdom.Document;
+import org.kxml2.kdom.Element;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
 
 /**
  * Created by e00959 on 2/6/2015.
@@ -18,21 +21,22 @@ import javax.xml.parsers.ParserConfigurationException;
 //The class will be used to parse the provided input stream of Xml file
 public class XmlParser {
 
-    private DocumentBuilderFactory documentBuilderFactory;
-    private DocumentBuilder documentBuilder;
     private Document document;
 //--------------------------------------------------------------------------------------------------
-    public XmlParser(InputStream is) throws ParserConfigurationException,SAXException,IOException
+    public XmlParser(InputStream is) throws XmlPullParserException,SAXException,IOException
     {
-        documentBuilderFactory=DocumentBuilderFactory.newInstance();
-        documentBuilder=documentBuilderFactory.newDocumentBuilder();
-        document =documentBuilder.parse(is);
+        document =new Document();
+        XmlPullParser configParser = new KXmlParser();
+        configParser.setInput(is, null);
+        configParser.setFeature(
+                XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+        document.parse(configParser);
 
     }
 //--------------------------------------------------------------------------------------------------
     public Element parseRootElement()
     {
-        Element element=document.getDocumentElement();
+        Element element=document.getRootElement();
         return element;
     }
 
