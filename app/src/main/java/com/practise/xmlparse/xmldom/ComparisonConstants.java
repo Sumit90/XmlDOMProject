@@ -9,9 +9,6 @@ package com.practise.xmlparse.xmldom;
 
 public interface ComparisonConstants {
 
-    //The deliminator to be used for separating the strings
-    public static final  String DELIMINATOR=";";
-
     //The deliminator to be used for Referencing Absolute Path(Path starting from root)
     public static final  String ABSOLUTE_PATH="/";
 

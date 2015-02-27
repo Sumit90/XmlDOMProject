@@ -29,7 +29,6 @@ import org.xmlpull.v1.XmlSerializer;
 /* This class is used for writing merged Xml file*/
 public class WriteXmlFile {
 
-    private ParametersList parametersList;
     private Document document;
     private Element docRootElement;
     private FileParameterPOJO fileParameterPOJO;
@@ -37,46 +36,14 @@ public class WriteXmlFile {
 
 //--------------------------------------------------------------------------------------------------
     //Parameterised constructor to set and get ParameterList object
-    public WriteXmlFile(ParametersList parametersList,FileParameterPOJO fileParameterPOJO)
+    public WriteXmlFile(FileParameterPOJO fileParameterPOJO)
     {
-        this.parametersList=parametersList;
+
         this.fileParameterPOJO=fileParameterPOJO;
         document= new Document();
 
     }
 
-//--------------------------------------------------------------------------------------------------
-    // This function is write the root element of the XML file and its attributes
-    public boolean writeRootElement() throws ParserConfigurationException
-    {
-
-            int counter = 0;
-            List<RootElementPOJO> rootElementPOJOList = parametersList.getRootParameterList();
-
-            // If there is no root element in the list return as document cannot be written without it
-            if (rootElementPOJOList.size() < 0) {
-                return false;
-            }
-
-            for (int count = 0; count < rootElementPOJOList.size(); count++) {
-                RootElementPOJO rootElement = rootElementPOJOList.get(count);
-                String[] splitTagAttribute = rootElement.getElementName().split(ComparisonConstants.DELIMINATOR_ATTRIBUTE);
-
-                //If the length after split is greater than 1 just add attributes to the root element
-                if (splitTagAttribute.length > 1) {
-                    setAttribute(splitTagAttribute[1], rootElement.getElementValue(), docRootElement);
-                }
-                // If the length after split is equal to 1 add root element tag. This will run only once.
-                else {
-                    docRootElement = document.createElement("",splitTagAttribute[0]);
-                    document.addChild(Node.ELEMENT,docRootElement);
-                }
-
-            }
-
-
-            return true;
-    }
 //--------------------------------------------------------------------------------------------------
     //This function will create an attribute and will append it to the element passed
     private void setAttribute(String attributeName, String attributeValue, Element element)
@@ -86,6 +53,19 @@ public class WriteXmlFile {
 
 //--------------------------------------------------------------------------------------------------
 
+    public boolean createDocRootElement(String rootElementName)
+    {
+        boolean isSuccessElement=false;
+
+        if(document!=null) {
+            docRootElement = document.createElement("", rootElementName);
+            document.addChild(Node.ELEMENT, docRootElement);
+            isSuccessElement=true;
+        }
+
+        return isSuccessElement;
+
+    }
     public Element getDocRootElement()
     {
         if (docRootElement!=null)
@@ -96,7 +76,7 @@ public class WriteXmlFile {
         return null;
     }
 
-    public void printXml() throws IOException
+    public void WriteXml() throws IOException
     {
 
             if (docRootElement != null) {

@@ -12,7 +12,6 @@ import org.kxml2.kdom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import org.xml.sax.SAXException;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -35,16 +34,10 @@ public class MainActivity extends ActionBarActivity {
 
     private InitialParameterList mInitialParameterList;
 
-    private ParametersList mParameterListFile1;
-    private ParametersList mParameterListFile2;
-    private ParametersList mParameterListFinal;
-
     private FileParameterPOJO mFileParameterPOJO;
 
     private final String TAG="MYLOGS";
-
     private boolean mStatusMerging =false;
-    private boolean statusCheckNode=false;
 
     private WriteXmlFile mWriteFile;
     private Element mRootElementFile1;
@@ -53,7 +46,7 @@ public class MainActivity extends ActionBarActivity {
     private String[] mHierarchy;
     private int mIndex=0;
     private Element mNodeToBeAdded;
-    boolean isSuccess=false;
+    boolean mIsSuccess =false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,53 +66,47 @@ public class MainActivity extends ActionBarActivity {
                         mRootElementFile1 = mParseFile1.parseRootElement();
                         mRootElementFile2 = mParseFile2.parseRootElement();
 
+                        //If no root elements exists in either of the file
                         if (mRootElementFile1 != null && mRootElementFile2 != null) {
 
-                            //add root parameters to list after comparing with initial root elements
-                            addRootParameters(mParameterListFile1, mRootElementFile1);
-                            addRootParameters(mParameterListFile2, mRootElementFile2);
+                            //If the name of root elements is same in both the files
+                            if(((mRootElementFile1.getName()).equals(mRootElementFile2.getName())))
+                            {
+                                mWriteFile = new WriteXmlFile(mFileParameterPOJO);
 
-                            printRootList(mParameterListFile1.getRootParameterList());
-                            printRootList(mParameterListFile2.getRootParameterList());
-
-                            //---print node element list---------------
-                            printRootList(mParameterListFile1.getNodeElementList());
-
-                            printRootList(mParameterListFile2.getNodeElementList());
-                            //---print node element list---------------
-
-
-                            List<RootElementPOJO> finalRootElementList = getMergedRootList
-                                    (mParameterListFile1.getRootParameterList(),
-                                            mParameterListFile2.getRootParameterList(),
-                                            mInitialParameterList.getInitialRootList());
-
-
-                            if (finalRootElementList != null && mStatusMerging) {
-                                /*Log.d(TAG,"---------- print final list start-------------");
-                                printRootList(finalRootElementList);
-                                Log.d(TAG,"---------- print final list end-------------");*/
-
-                                mParameterListFinal.setRootParameterList(finalRootElementList);
-                                Log.d(TAG, "---------- Writing XML start-------------");
-
-                                mWriteFile = new WriteXmlFile(mParameterListFinal, mFileParameterPOJO);
-
-                                if (mWriteFile.writeRootElement()) {
+                                if(mWriteFile.createDocRootElement(mRootElementFile1.getName()))
+                                {
                                     mRootElementFinal = mWriteFile.getDocRootElement();
 
-                                    if (writeNodesToXml(mRootElementFile1, mRootElementFile2, mRootElementFinal)) {
-                                        mWriteFile.printXml();
-                                    } else {
-                                        Log.d(TAG, "Error while adding nodes writeNodesToXml");
-                                    }
+                                    if(compareAndMergeRootParameters(mRootElementFinal
+                                            ,mRootElementFile1,mRootElementFile2))
+                                    {
+                                        Log.d(TAG, "---------- check writeNodesToXml()-------------");
 
+                                        if (writeNodesToXml(mRootElementFile1, mRootElementFile2, mRootElementFinal))
+                                        {
+                                            mWriteFile.WriteXml();
+                                        } else
+                                        {
+                                            Log.d(TAG, "Error while adding nodes writeNodesToXml");
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        Log.d(TAG, "-------Cannot write Root Attributes-----------------");
+                                    }
+                                }
+                                else
+                                {
+                                    Log.d(TAG, "-------Cannot create the root element-----------------");
                                 }
 
+                            }
+                            else
+                            {
+                                Log.d(TAG, "---Cannot write the XML File; Root Elements Not same---");
 
-                                Log.d(TAG, "---------- Writing Xml end-------------");
-                            } else {
-                                Log.d(TAG, "-------Cannot write the XML File-----------------");
                             }
 
                         }
@@ -158,30 +145,25 @@ public class MainActivity extends ActionBarActivity {
             mParseFile2 =  new XmlParser(mInputStreamFile2);
 
             mFileParameterPOJO =new FileParameterPOJO(mInputStreamFile1, mInputStreamFile2
-                    ,ComparisonConstants.PRIORITY_FILE1,"LogCodes.xml","/sdcard/FTA/Log/",true);
+                    ,ComparisonConstants.PRIORITY_FILE2,"LogCodes.xml","/sdcard/FTA/Log/",true);
 
             mInitialParameterList =new InitialParameterList();
 
-            mParameterListFile1 =new ParametersList();
-            mParameterListFile2 =new ParametersList();
-            mParameterListFinal =new ParametersList();
-
-            addInitialRootParameters("fastLogcodes",ComparisonConstants.COMPARE_EQUAL);
-            addInitialRootParameters("fastLogcodes@A",ComparisonConstants.COMPARE_EQUAL);
-            addInitialRootParameters("fastLogcodes@B",ComparisonConstants.COMPARE_EQUAL);
-            addInitialRootParameters("fastLogcodes@C",ComparisonConstants.COMPARE_EQUAL);
+            //addInitialRootParameters("fastLogcodes",ComparisonConstants.COMPARE_EQUAL);
+            addInitialRootParameters("@A",ComparisonConstants.COMPARE_EQUAL);
+            addInitialRootParameters("@B",ComparisonConstants.COMPARE_GREATER_FILE1);
+            addInitialRootParameters("@C",ComparisonConstants.COMPARE_GREATER_FILE2);
+            addInitialRootParameters("@D",ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1);
+            addInitialRootParameters("@E",ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2);
+            addInitialRootParameters("@F",ComparisonConstants.PICK_FROM_FILE1);
+            addInitialRootParameters("@G",ComparisonConstants.PICK_FROM_FILE2);
+            addInitialRootParameters("@H",ComparisonConstants.NO_COMPARISON);
 
             addInitialNodeParameters("","","","","Lte",
                     null,ComparisonConstants.NODE,ComparisonConstants.PICK_FROM_FILE1,"Lte/A");
 
             addInitialNodeParameters("","","","","Gsm",
                     null,ComparisonConstants.NODE,ComparisonConstants.PICK_FROM_FILE2,"Gsm/A");
-
-
-
-            //addInitialNodeAttributes("Lte;A;B;N", ComparisonConstants.PICK_FROM_FILE1);
-            //addInitialNodeAttributes("Lte1;N", ComparisonConstants.PICK_FROM_FILE1);
-
 
             printRootList(mInitialParameterList.getInitialRootList());
 
@@ -195,24 +177,17 @@ public class MainActivity extends ActionBarActivity {
             ex.printStackTrace();
 
         }
+        catch (XmlPullParserException ex)
+        {
+            isInitSuccess=false;
+            Log.d(TAG,"inside init XmlPullParserException");
+            ex.printStackTrace();
+        }
         catch(IOException ex)
         {
             isInitSuccess=false;
             Log.d(TAG,"inside init IOException");
             ex.printStackTrace();
-
-        }
-        catch (XmlPullParserException e)
-        {
-            isInitSuccess=false;
-            Log.d(TAG,"inside init XmlPullParserException");
-            e.printStackTrace();
-        }
-        catch (SAXException e)
-        {
-            isInitSuccess=false;
-            Log.d(TAG,"inside init SAXException");
-            e.printStackTrace();
         }
         catch(Exception ex)
         {
@@ -245,65 +220,260 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
 }
 
 
-//--------------------------------------------------------------------------------------------------
-//This function will add root attributes to root parameter list after comparing it with initial list
-        void addRootParameters(ParametersList paramList,Element rootElement)
-        {
-           //This will give the Tag name of Root Element
-            String rootTagName=rootElement.getName();
-            //Get all initial root attributes set by the user
-            List<RootElementPOJO> initialRootParams = mInitialParameterList.getInitialRootList();
 
-            RootElementPOJO rootElementPOJO=null;
+private boolean compareAndMergeRootParameters(Element rootElementFinal,Element mRootElementFile1,
+                                                                            Element mRootElementFile2)
+{
+    boolean isSuccess=false;
 
-            /*Iterate the list to get all Initial Root Attributes set by user. Using those values
-               get the attributes from rootElement and create a new list in ParametersList for root
-               elements .
-             */
-            for (int count=0;count<initialRootParams.size();count++)
+    if(rootElementFinal==null ||( mRootElementFile1==null && mRootElementFile2==null))
+    {
+        return isSuccess;
+    }
+
+
+
+    List<RootElementPOJO> initialRootList=mInitialParameterList.getInitialRootList();
+    RootElementPOJO initialRootElement=null;
+    String attributeName="";
+
+    String attributeValue1=null;
+    String attributeValue2=null;
+
+    int modeComparison;
+
+    if(initialRootList==null || initialRootList.size()==0)
+    {
+        return isSuccess;
+    }
+
+    OUTER_LOOP : for(int counter=0;counter<initialRootList.size();counter++)
+    {
+        isSuccess=false;
+        initialRootElement=initialRootList.get(counter);
+        attributeName=initialRootElement.getElementName();
+        attributeName=attributeName.replace(ComparisonConstants.DELIMINATOR_ATTRIBUTE,"");
+
+        modeComparison=initialRootElement.getModeOfComparison();
+
+        if(attributeName!=null && !attributeName.equals("")) {
+            attributeValue1 = mRootElementFile1.getAttributeValue("", attributeName);
+            attributeValue2 = mRootElementFile2.getAttributeValue("", attributeName);
+
+            if((attributeValue1==null || attributeValue1.equals("")) &&
+                                            (attributeValue2==null || attributeValue2.equals("")))
             {
-                rootElementPOJO = initialRootParams.get(count);
-                //This string contains tag name and attribute name of root element separated by
-                // deliminator
-                String rootElementName=rootElementPOJO.getElementName();
+                Log.d(TAG,"----attributeValue1== null && attributeValue2== null------");
+                isSuccess = false;
+                break OUTER_LOOP;
+            }
 
-                //0th index contains tag name and 1st contains actual attribute name
-                String []tagAttribute=rootElementName.split(ComparisonConstants.DELIMINATOR_ATTRIBUTE);
 
-                // If tag name for root in initial list and root element matches
-                if(tagAttribute[0].equals(rootTagName))
+            if (modeComparison == ComparisonConstants.COMPARE_EQUAL
+                    || modeComparison == ComparisonConstants.COMPARE_GREATER_FILE1
+                    || modeComparison == ComparisonConstants.COMPARE_GREATER_FILE2
+                    || modeComparison == ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1
+                    || modeComparison == ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2) {
+
+                if(attributeValue1==null || attributeValue1.equals(""))
                 {
+                    Log.d(TAG,"----missing attribute in attributeValue1------");
+                    isSuccess = false;
+                    break OUTER_LOOP;
+                }
+                else if(attributeValue2==null || attributeValue2.equals("")){
 
-                    if(tagAttribute.length>1)
-                    {
-                      /*Get the attribute value for attribute name given by initial root element list
-                      after splitting (tagAttribute[1]) . tagAttribute[0] gives root tag name
-                      */
-                       String attributeValue=rootElement.getAttributeValue(XmlPullParser.NO_NAMESPACE,
-                                                                                        tagAttribute[1]);
+                    Log.d(TAG,"----missing attribute in attributeValue2------");
+                    isSuccess = false;
+                    break OUTER_LOOP;
+                }
 
-                    /* If the attribute exists in Root element create a RootPOJO object and add
-                    * it to the list*/
-                        if(!attributeValue.isEmpty())
-                        {
+            }
 
-                                paramList.addRootParameter(new
-                                        RootElementPOJO(rootElementName, attributeValue,
-                                        rootElementPOJO.getModeOfComparison()));
+
+            switch (modeComparison) {
+                case ComparisonConstants.COMPARE_EQUAL:
+
+                    if (compareAttributeValues(attributeValue1, attributeValue2,
+                            ComparisonConstants.COMPARE_EQUAL)) {
+
+                        /*If file1 has more priority then add the element in final list from file1 list*/
+                        if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
+                            setAttribute(attributeName, attributeValue1, rootElementFinal);
                         }
-                    }
+                            /*If file2 has more priority then add the element in final list from file2 list*/
+                        else if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE2) {
+                            setAttribute(attributeName, attributeValue2, rootElementFinal);
+                        }
+                        isSuccess = true;
 
-                    //If user has passed only Root tag name add it to the list.
+                    }
                     else
                     {
-                            paramList.addRootParameter(new
-                                    RootElementPOJO(tagAttribute[0], "", rootElementPOJO.getModeOfComparison()));
-
-
+                        Log.d(TAG,"----COMPARE_EQUAL break------+"+attributeName);
+                        isSuccess = false;
+                        break OUTER_LOOP;
                     }
-                }
+
+                    break;
+
+                case ComparisonConstants.COMPARE_GREATER_FILE1:
+
+                    if (compareAttributeValues(attributeValue1, attributeValue2,
+                            ComparisonConstants.COMPARE_GREATER_FILE1)) {
+
+                        setAttribute(attributeName, attributeValue1, rootElementFinal);
+                        isSuccess = true;
+                    }
+                    else
+                    {
+                        Log.d(TAG,"----COMPARE_GREATER_FILE1 break------"+attributeName);
+                        isSuccess = false;
+                        break OUTER_LOOP;
+                    }
+
+                    break;
+
+                case ComparisonConstants.COMPARE_GREATER_FILE2:
+
+                    if (compareAttributeValues(attributeValue1, attributeValue2,
+                            ComparisonConstants.COMPARE_GREATER_FILE2)) {
+
+                        setAttribute(attributeName, attributeValue2, rootElementFinal);
+                        isSuccess = true;
+                    }
+                    else
+                    {
+                        Log.d(TAG,"----COMPARE_GREATER_FILE2 break------"+attributeName);
+                        isSuccess = false;
+                        break OUTER_LOOP;
+                    }
+
+                    break;
+
+                case ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1:
+
+                    if (compareAttributeValues(attributeValue1, attributeValue2,
+                            ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1)) {
+
+                        setAttribute(attributeName, attributeValue1, rootElementFinal);
+                        isSuccess = true;
+                    }
+                    else
+                    {
+                        Log.d(TAG,"----COMPARE_GREATER_EQUAL_FILE1 break------"+attributeName);
+                        isSuccess = false;
+                        break OUTER_LOOP;
+                    }
+
+                    break;
+
+
+                case ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2:
+
+                    if (compareAttributeValues(attributeValue1, attributeValue2,
+                            ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2)) {
+
+                        setAttribute(attributeName, attributeValue2, rootElementFinal);
+                        isSuccess = true;
+                    }
+                    else
+                    {
+                        Log.d(TAG,"----COMPARE_GREATER_FILE2 break------"+attributeName);
+                        isSuccess = false;
+                        break OUTER_LOOP;
+                    }
+
+                    break;
+
+
+                case ComparisonConstants.PICK_FROM_FILE1:
+
+
+                    if (attributeValue1!=null || !attributeValue1.equals("")) {
+
+                        setAttribute(attributeName, attributeValue1, rootElementFinal);
+                        isSuccess = true;
+                    }
+                    else
+                    {
+                        Log.d(TAG,"----PICK_FROM_FILE1 break------"+attributeName);
+                        isSuccess = false;
+                        break OUTER_LOOP;
+                    }
+
+                    break;
+
+
+                case ComparisonConstants.PICK_FROM_FILE2:
+
+                    if (attributeValue2!=null || !attributeValue2.equals("")) {
+
+                        setAttribute(attributeName, attributeValue2, rootElementFinal);
+                        isSuccess = true;
+                    }
+                    else
+                    {
+                        Log.d(TAG,"----PICK_FROM_FILE2 break------"+attributeName);
+                        isSuccess = false;
+                        break OUTER_LOOP;
+                    }
+
+                    break;
+
+
+                case ComparisonConstants.NO_COMPARISON:
+
+                    if((attributeValue1!=null || !attributeValue1.equals(""))&&
+                                                (attributeValue2!=null || !attributeValue2.equals("")))
+                    {
+                        if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
+                        {
+                            setAttribute(attributeName, attributeValue1, rootElementFinal);
+                            isSuccess = true;
+
+                        }
+                        else if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE2)
+                        {
+                            setAttribute(attributeName, attributeValue2, rootElementFinal);
+                            isSuccess = true;
+                        }
+                    }
+                    else if((attributeValue1!=null || !attributeValue1.equals("")))
+                    {
+                        setAttribute(attributeName, attributeValue1, rootElementFinal);
+                        isSuccess = true;
+                    }
+                    else if((attributeValue2!=null || !attributeValue2.equals("")))
+                    {
+                        setAttribute(attributeName, attributeValue2, rootElementFinal);
+                        isSuccess = true;
+                    }
+
+
+                    break;
+
             }
         }
+        else
+        {
+            Log.d(TAG,"----[compareAndMergeRootParameters]: attributeName==null && attributeName.equals");
+            isSuccess=false;
+            break OUTER_LOOP;
+        }
+
+
+    }
+
+        return isSuccess;
+
+}
+
+    //This function will create an attribute and will append it to the element passed
+    private void setAttribute(String attributeName, String attributeValue, Element element)
+    {
+        element.setAttribute("",attributeName,attributeValue);
+    }
 
 
 //--------------------------------------------------------------------------------------------------
@@ -633,6 +803,11 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
         //Get all initial Node attributes set by the user
         List<NodeElementPOJO> initialNodes = mInitialParameterList.getInitialNodeAttributeList();
 
+        if(initialNodes==null || initialNodes.size()==0)
+        {
+            return isWriteSuccess;
+        }
+
         NodeElementPOJO nodeElementPOJO=null;
 
         String keyChildName="";
@@ -660,7 +835,7 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
             modeOfComparison=nodeElementPOJO.getModeOfComparison();
             elementName=nodeElementPOJO.getElementName();
 
-            isSuccess=false;
+            mIsSuccess =false;
 
             if(!(elementType.equals(ComparisonConstants.NODE)||
                     elementType.equals(ComparisonConstants.ATTRIBUTE)||
@@ -679,24 +854,16 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
             {
                 case ComparisonConstants.NODE:
 
-                    String []getElementNames=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
-
-                    /* if(getElementNames.length<2)
-                     {
-                         isWriteSuccess=false;
-                         Log.d(TAG,"writeNodesToXml:[getElementNames.length<2]: break loop---------");
-                         break OUTER_LOOP;
-                     }*/
+                    mHierarchy=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
 
 
                     if(modeOfComparison==ComparisonConstants.NO_COMPARISON)
                     {
                         if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
                         {
-                            mHierarchy=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
-                            getElementByName(rootElementFile1, rootElementFinal);
+                            searchAndMergeNodeElements(rootElementFile1, rootElementFinal);
 
-                            if(isSuccess){
+                            if(mIsSuccess){
 
                                 isWriteSuccess=true;
                             }
@@ -709,10 +876,9 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
 
                         }else {
 
-                            mHierarchy=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
-                            getElementByName(rootElementFile2, rootElementFinal);
+                            searchAndMergeNodeElements(rootElementFile2, rootElementFinal);
 
-                            if(isSuccess){
+                            if(mIsSuccess){
 
                                 isWriteSuccess=true;
                             }
@@ -729,10 +895,9 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                     }
                     else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE1)
                     {
-                        mHierarchy=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
-                        getElementByName(rootElementFile1, rootElementFinal);
+                        searchAndMergeNodeElements(rootElementFile1, rootElementFinal);
 
-                        if(isSuccess){
+                        if(mIsSuccess){
 
                             isWriteSuccess=true;
                         }
@@ -748,14 +913,9 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                     }
                     else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE2)
                     {
-                        /*if(addFullNodeToRoot(rootElementFile2, getElementNames[1], rootElementFinal)){
+                        searchAndMergeNodeElements(rootElementFile2, rootElementFinal);
 
-                            isWriteSuccess=true;
-                        }*/
-                        mHierarchy=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
-                        getElementByName(rootElementFile2, rootElementFinal);
-
-                        if(isSuccess){
+                        if(mIsSuccess){
 
                             isWriteSuccess=true;
                         }
@@ -777,83 +937,6 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
 
                     break;
 
-
-                case ComparisonConstants.ATTRIBUTE:
-
-
-                    if(modeOfComparison==ComparisonConstants.NO_COMPARISON)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE1)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE2)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.COMPARE_EQUAL)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_FILE1)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_FILE2)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2)
-                    {
-
-                    }
-
-
-                    break;
-
-                case ComparisonConstants.TEXT:
-
-
-                    if(modeOfComparison==ComparisonConstants.NO_COMPARISON)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE1)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE2)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.COMPARE_EQUAL)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_FILE1)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_FILE2)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1)
-                    {
-
-                    }
-                    else if(modeOfComparison==ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2)
-                    {
-
-                    }
-
-                    break;
             }
 
         }
@@ -862,36 +945,8 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
 
     }
 
-    private boolean addFullNodeToRoot(Element mainElement, String nameOfElement, Element finalElement)
-    {
-        boolean isSuccessAppend=true;
 
-        try
-        {
-            for(int counter=0;counter<mainElement.getChildCount();counter++)
-            {
-                Element element = mainElement.getElement(counter);
-                if(element!=null && element.getName().equals(nameOfElement))
-                {
-                    finalElement.addChild(org.kxml2.kdom.Node.ELEMENT,element);
-                    isSuccessAppend=true;
-                }
-
-            }
-
-
-        }
-        catch (Exception e)
-        {
-            isSuccessAppend=false;
-            e.printStackTrace();
-
-        }
-        return isSuccessAppend;
-
-    }
-
-    private void getElementByName(Element rootElement,Element finalElement)
+    private void searchAndMergeNodeElements(Element rootElement, Element finalElement)
     {
 
         for(int j=0;j<rootElement.getChildCount();j++)
@@ -906,7 +961,7 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                 }
                 if(mIndex==mHierarchy.length-1)
                 {
-                    isSuccess=true;
+                    mIsSuccess =true;
                     finalElement.addChild(org.kxml2.kdom.Node.ELEMENT,mNodeToBeAdded);
                     mNodeToBeAdded=null;
                     mIndex=0;
@@ -914,7 +969,7 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                 }else
                 {
                       mIndex++;
-                     getElementByName(childElement,finalElement);
+                     searchAndMergeNodeElements(childElement, finalElement);
                 }
             }
 
@@ -949,6 +1004,7 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
     public boolean compareAttributeValues(String attrValue1,String attrValue2,int comparisonType)
     {
         boolean result=false;
+
 
         switch (comparisonType)
         {

@@ -1,14 +1,14 @@
-<?xml version="1.0" encoding="UTF-8"?><fastLogcodes  A="a " B="b " C="c">
-    <Lte name="lte1">
+<?xml version="1.0" encoding="UTF-8"?><fastLogcodes  A="a " B="2.2 " C="1.0" D="2.3" E="22" F="1" H="55">
+    <Lte name="lte11">
         <A>Element A</A>
         <B/>
     </Lte>
 
-    <Lte name="lte2">
+    <Lte name="lte12">
         <A>Element A</A>
         <B/>
     </Lte>
-    <Lte name="lte3">
+    <Lte name="lte13">
         <A>Element A</A>
         <B/>
     </Lte>
