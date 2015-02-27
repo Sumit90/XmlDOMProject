@@ -25,115 +25,108 @@ import java.util.List;
 
 public class MainActivity extends ActionBarActivity {
 
-    private Button parseBtn;
+    private Button mParseBtn;
 
-    private InputStream inputStreamFile1;
-    private InputStream inputStreamFile2;
+    private InputStream mInputStreamFile1;
+    private InputStream mInputStreamFile2;
 
-    private XmlParser parseFile1;
-    private XmlParser parseFile2;
+    private XmlParser mParseFile1;
+    private XmlParser mParseFile2;
 
-    private InitialParameterList initialParameterList;
+    private InitialParameterList mInitialParameterList;
 
-    private ParametersList ParameterListFile1;
-    private ParametersList ParameterListFile2;
-    private ParametersList ParameterListFinal;
+    private ParametersList mParameterListFile1;
+    private ParametersList mParameterListFile2;
+    private ParametersList mParameterListFinal;
 
-    private FileParameterPOJO fileParameterPOJO;
+    private FileParameterPOJO mFileParameterPOJO;
 
     private final String TAG="MYLOGS";
 
-    private boolean statusMerging=false;
+    private boolean mStatusMerging =false;
     private boolean statusCheckNode=false;
 
-    private WriteXmlFile writeFile;
-    private Element rootElementFile1;
-    private Element rootElementFile2;
-    private Element rootElementFinal;
-    private static int counter=0;
+    private WriteXmlFile mWriteFile;
+    private Element mRootElementFile1;
+    private Element mRootElementFile2;
+    private Element mRootElementFinal;
+    private String[] mHierarchy;
+    private int mIndex=0;
+    private Element mNodeToBeAdded;
+    boolean isSuccess=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        parseBtn=(Button)findViewById(R.id.parse_button);
+        mParseBtn =(Button)findViewById(R.id.parse_button);
 
 
-        parseBtn.setOnClickListener(new View.OnClickListener() {
+        mParseBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
 
                     if (init()) {
                         //get the root elements of the XML files
-                        rootElementFile1 = parseFile1.parseRootElement();
-                        rootElementFile2 = parseFile2.parseRootElement();
+                        mRootElementFile1 = mParseFile1.parseRootElement();
+                        mRootElementFile2 = mParseFile2.parseRootElement();
 
-                        if (rootElementFile1 != null && rootElementFile2 != null) {
+                        if (mRootElementFile1 != null && mRootElementFile2 != null) {
 
                             //add root parameters to list after comparing with initial root elements
-                            addRootParameters(ParameterListFile1,rootElementFile1);
-                            addRootParameters(ParameterListFile2,rootElementFile2);
+                            addRootParameters(mParameterListFile1, mRootElementFile1);
+                            addRootParameters(mParameterListFile2, mRootElementFile2);
 
-                            printRootList(ParameterListFile1.getRootParameterList());
-                            printRootList(ParameterListFile2.getRootParameterList());
+                            printRootList(mParameterListFile1.getRootParameterList());
+                            printRootList(mParameterListFile2.getRootParameterList());
 
                             //---print node element list---------------
-                            printRootList(ParameterListFile1.getNodeElementList());
+                            printRootList(mParameterListFile1.getNodeElementList());
 
-                            printRootList(ParameterListFile2.getNodeElementList());
+                            printRootList(mParameterListFile2.getNodeElementList());
                             //---print node element list---------------
 
 
+                            List<RootElementPOJO> finalRootElementList = getMergedRootList
+                                    (mParameterListFile1.getRootParameterList(),
+                                            mParameterListFile2.getRootParameterList(),
+                                            mInitialParameterList.getInitialRootList());
 
-                            List<RootElementPOJO> finalRootElementList =getMergedRootList
-                                    (ParameterListFile1.getRootParameterList(),
-                                            ParameterListFile2.getRootParameterList(),
-                                            initialParameterList.getInitialRootList());
 
-
-                            if(finalRootElementList!=null && statusMerging)
-                            {
+                            if (finalRootElementList != null && mStatusMerging) {
                                 /*Log.d(TAG,"---------- print final list start-------------");
                                 printRootList(finalRootElementList);
                                 Log.d(TAG,"---------- print final list end-------------");*/
 
-                                ParameterListFinal.setRootParameterList(finalRootElementList);
-                                Log.d(TAG,"---------- Writing XML start-------------");
+                                mParameterListFinal.setRootParameterList(finalRootElementList);
+                                Log.d(TAG, "---------- Writing XML start-------------");
 
-                                writeFile = new WriteXmlFile(ParameterListFinal,fileParameterPOJO);
+                                mWriteFile = new WriteXmlFile(mParameterListFinal, mFileParameterPOJO);
 
-                                if(writeFile.writeRootElement())
-                                {
-                                    rootElementFinal=writeFile.getDocRootElement();
+                                if (mWriteFile.writeRootElement()) {
+                                    mRootElementFinal = mWriteFile.getDocRootElement();
 
-                                    if(writeNodesToXml(rootElementFile1,rootElementFile2,rootElementFinal))
-                                    {
-                                        writeFile.printXml();
-                                    }
-                                    else
-                                    {
-                                        Log.d(TAG,"Error while adding nodes writeNodesToXml");
+                                    if (writeNodesToXml(mRootElementFile1, mRootElementFile2, mRootElementFinal)) {
+                                        mWriteFile.printXml();
+                                    } else {
+                                        Log.d(TAG, "Error while adding nodes writeNodesToXml");
                                     }
 
                                 }
 
 
-                                Log.d(TAG,"---------- Writing Xml end-------------");
-                            }
-                            else
-                            {
-                                Log.d(TAG,"-------Cannot write the XML File-----------------");
+                                Log.d(TAG, "---------- Writing Xml end-------------");
+                            } else {
+                                Log.d(TAG, "-------Cannot write the XML File-----------------");
                             }
 
                         }
                     }
-                }
+                } catch (Exception e) {
 
-                catch (Exception e) {
-
-                    Log.d(TAG,"inside Exception");
+                    Log.d(TAG, "inside Exception");
                     e.printStackTrace();
                 }
 
@@ -156,39 +149,41 @@ public class MainActivity extends ActionBarActivity {
         try {
 
           //----------------get the input streams of file here from user----------------------------
-            inputStreamFile1 = getResources().getAssets().open("LogCodes.xml");
-            inputStreamFile2 = getResources().getAssets().open("LogCodes1.xml");
+            mInputStreamFile1 = getResources().getAssets().open("LogCodes.xml");
+            mInputStreamFile2 = getResources().getAssets().open("LogCodes1.xml");
           //----------------------------------------------------------------------------------------
 
 
-            parseFile1 = new XmlParser(inputStreamFile1);
-            parseFile2 =  new XmlParser(inputStreamFile2);
+            mParseFile1 = new XmlParser(mInputStreamFile1);
+            mParseFile2 =  new XmlParser(mInputStreamFile2);
 
-            fileParameterPOJO=new FileParameterPOJO(inputStreamFile1,inputStreamFile2
-                    ,ComparisonConstants.PRIORITY_FILE2,"LogCodes.xml","/sdcard/FTA/Log/",true);
+            mFileParameterPOJO =new FileParameterPOJO(mInputStreamFile1, mInputStreamFile2
+                    ,ComparisonConstants.PRIORITY_FILE1,"LogCodes.xml","/sdcard/FTA/Log/",true);
 
-            initialParameterList=new InitialParameterList();
+            mInitialParameterList =new InitialParameterList();
 
-            ParameterListFile1 =new ParametersList();
-            ParameterListFile2 =new ParametersList();
-            ParameterListFinal=new ParametersList();
+            mParameterListFile1 =new ParametersList();
+            mParameterListFile2 =new ParametersList();
+            mParameterListFinal =new ParametersList();
 
             addInitialRootParameters("fastLogcodes",ComparisonConstants.COMPARE_EQUAL);
             addInitialRootParameters("fastLogcodes@A",ComparisonConstants.COMPARE_EQUAL);
             addInitialRootParameters("fastLogcodes@B",ComparisonConstants.COMPARE_EQUAL);
             addInitialRootParameters("fastLogcodes@C",ComparisonConstants.COMPARE_EQUAL);
 
-            addInitialNodeParameters("","","","","fastLogcodes",
-                    null,ComparisonConstants.NODE,ComparisonConstants.NO_COMPARISON,"fastLogcodes/Lte");
+            addInitialNodeParameters("","","","","Lte",
+                    null,ComparisonConstants.NODE,ComparisonConstants.PICK_FROM_FILE1,"Lte/A");
 
-            addInitialNodeParameters("","","","","fastLogcodes",
-                    null,ComparisonConstants.NODE,ComparisonConstants.NO_COMPARISON,"fastLogcodes/Lte1");
+            addInitialNodeParameters("","","","","Gsm",
+                    null,ComparisonConstants.NODE,ComparisonConstants.PICK_FROM_FILE2,"Gsm/A");
+
+
 
             //addInitialNodeAttributes("Lte;A;B;N", ComparisonConstants.PICK_FROM_FILE1);
             //addInitialNodeAttributes("Lte1;N", ComparisonConstants.PICK_FROM_FILE1);
 
 
-            printRootList(initialParameterList.getInitialRootList());
+            printRootList(mInitialParameterList.getInitialRootList());
 
             isInitSuccess=true;
         }
@@ -234,7 +229,7 @@ public class MainActivity extends ActionBarActivity {
 //This function is used to add Initial Root attributes to be used for comparing and extracting
         void addInitialRootParameters(String attributeName,int mode)
         {
-            initialParameterList.addInitialRoot(new RootElementPOJO(attributeName, mode));
+            mInitialParameterList.addInitialRoot(new RootElementPOJO(attributeName, mode));
         }
 //--------------------------------------------------------------------------------------------------
 //This function is used to add Initial Node attributes to be used for comparing and extracting
@@ -243,9 +238,9 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                               Node parentReferenceNode,String nodeType, int modeOfComparison,
                               String elementName )
 {
-    initialParameterList.addInitialNodeAttribute(new NodeElementPOJO(keyChildName,keyChildValue,
-            valueChildName,valueChildValue,parentReferenceAddress,parentReferenceNode,nodeType,
-            modeOfComparison,null,elementName));
+    mInitialParameterList.addInitialNodeAttribute(new NodeElementPOJO(keyChildName, keyChildValue,
+            valueChildName, valueChildValue, parentReferenceAddress, parentReferenceNode, nodeType,
+            modeOfComparison, null, elementName));
 
 }
 
@@ -257,7 +252,7 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
            //This will give the Tag name of Root Element
             String rootTagName=rootElement.getName();
             //Get all initial root attributes set by the user
-            List<RootElementPOJO> initialRootParams = initialParameterList.getInitialRootList();
+            List<RootElementPOJO> initialRootParams = mInitialParameterList.getInitialRootList();
 
             RootElementPOJO rootElementPOJO=null;
 
@@ -340,7 +335,7 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                 rootElement = listRootInitial.get(counter);
 
                 //get the mode how element has to be pushed in final XML
-                modeComparison = initialParameterList.getModeComparison(rootElement.getElementName());
+                modeComparison = mInitialParameterList.getModeComparison(rootElement.getElementName());
 
 
                 if (modeComparison == ComparisonConstants.COMPARE_EQUAL
@@ -351,13 +346,13 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                     //If file1 does not contain any of the elements exit the loop
                     if (listRootFile1 == null || listRootFile1.size() == 0) {
                         Log.d(TAG, "-----getMergedRootList(): listRootFile1==null");
-                        statusMerging = false;
+                        mStatusMerging = false;
                         break OUTERLOOP;
                     }
                     //If file2 does not contain any of the elements exit the loop
                     else if (listRootFile2 == null || listRootFile2.size() == 0) {
                         Log.d(TAG, "-----getMergedRootList(): listRootFile2==null");
-                        statusMerging = false;
+                        mStatusMerging = false;
                         break OUTERLOOP;
                     }
 
@@ -372,7 +367,7 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                 }
                    /*If the required element not found in File1 then break the loop*/
                 else {
-                    statusMerging = false;
+                    mStatusMerging = false;
                     Log.d(TAG, "-----getMergedRootList(): " + rootElement.getElementName() + " Not Found in File1");
                     break OUTERLOOP;
                 }
@@ -389,19 +384,19 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                         if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
                                 ComparisonConstants.COMPARE_EQUAL)) {
                            /*If file1 has more priority then add the element in final list from file1 list*/
-                            if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
+                            if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
                                 finalRootList.add(rootElementFile1);
                             }
                             /*If file2 has more priority then add the element in final list from file2 list*/
-                            else if (fileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE2) {
+                            else if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE2) {
                                 finalRootList.add(rootElementFile2);
                             }
-                            statusMerging = true;
+                            mStatusMerging = true;
                         }
                         // If the attribute value if File1 and File2 are not equal
                         else {
                             Log.d(TAG, "-----getMergedRootList():COMPARE_EQUAL " + rootElementFile1.getElementValue() + " != " + rootElementFile2.getElementValue());
-                            statusMerging = false;
+                            mStatusMerging = false;
                             break OUTERLOOP;
                         }
 
@@ -414,10 +409,10 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                                 ComparisonConstants.COMPARE_GREATER_FILE1)) {
 
                             finalRootList.add(rootElementFile1);
-                            statusMerging = true;
+                            mStatusMerging = true;
                         } else {
                             Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE1 " + rootElementFile1.getElementValue() + " < " + rootElementFile2.getElementValue());
-                            statusMerging = false;
+                            mStatusMerging = false;
                             break OUTERLOOP;
                         }
                     }
@@ -428,10 +423,10 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                         if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
                                 ComparisonConstants.COMPARE_GREATER_FILE2)) {
                             finalRootList.add(rootElementFile2);
-                            statusMerging = true;
+                            mStatusMerging = true;
                         } else {
                             Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE2 " + rootElementFile2.getElementValue() + " < " + rootElementFile1.getElementValue());
-                            statusMerging = false;
+                            mStatusMerging = false;
                             break OUTERLOOP;
                         }
                     }
@@ -442,10 +437,10 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                         if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
                                 ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1)) {
                             finalRootList.add(rootElementFile1);
-                            statusMerging = true;
+                            mStatusMerging = true;
                         } else {
                             Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE2 " + rootElementFile1.getElementValue() + " < !=" + rootElementFile2.getElementValue());
-                            statusMerging = false;
+                            mStatusMerging = false;
                             break OUTERLOOP;
                         }
                     }
@@ -457,10 +452,10 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                         if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
                                 ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2)) {
                             finalRootList.add(rootElementFile2);
-                            statusMerging = true;
+                            mStatusMerging = true;
                         } else {
                             Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE2 " + rootElementFile2.getElementValue() + " < 1=" + rootElementFile1.getElementValue());
-                            statusMerging = false;
+                            mStatusMerging = false;
                             break OUTERLOOP;
                         }
                     }
@@ -471,7 +466,7 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                 else {
                     if (rootElementFile2 == null) {
                         Log.d(TAG, "-----getMergedRootList(): " + rootElement.getElementName() + " Not Found File2");
-                        statusMerging = false;
+                        mStatusMerging = false;
                     }
 
                     break OUTERLOOP;
@@ -484,7 +479,7 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                 //If file1 does not contain any of the elements exit the loop
                 if (listRootFile1 == null || listRootFile1.size() == 0) {
                     Log.d(TAG, "-----getMergedRootList(): listRootFile1==null");
-                    statusMerging = false;
+                    mStatusMerging = false;
                     break OUTERLOOP;
                 }
                 else {
@@ -494,11 +489,11 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                    /*If the required element is found in File1 then add it the final list*/
                     if (rootElementFile1 != null) {
                         finalRootList.add(rootElementFile2);
-                        statusMerging = true;
+                        mStatusMerging = true;
                     }
                    /*If the required element not found in File1 then break the loop*/
                     else {
-                        statusMerging = false;
+                        mStatusMerging = false;
                         Log.d(TAG, "-----getMergedRootList():PICK_FROM_FILE1 " + rootElement.getElementName() + " Not Found in File1");
                         break OUTERLOOP;
                     }
@@ -512,7 +507,7 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                 //If file2 does not contain any of the elements exit the loop
                 if (listRootFile2 == null || listRootFile2.size() == 0) {
                     Log.d(TAG, "-----getMergedRootList(): listRootFile2==null");
-                    statusMerging = false;
+                    mStatusMerging = false;
                     break OUTERLOOP;
                 }
                 else {
@@ -522,11 +517,11 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                    /*If the required element is found in File1 then add it the final list*/
                     if (rootElementFile2 != null) {
                         finalRootList.add(rootElementFile2);
-                        statusMerging = true;
+                        mStatusMerging = true;
                     }
                    /*If the required element not found in File2 then break the loop*/
                     else {
-                        statusMerging = false;
+                        mStatusMerging = false;
                         Log.d(TAG, "-----getMergedRootList():PICK_FROM_FILE2 " + rootElement.getElementName() + " Not Found in File2");
                         break OUTERLOOP;
                     }
@@ -547,36 +542,36 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                /*If the element does not exists in both of the lists then break the loop.*/
                   if(rootElementFile1==null && rootElementFile2==null)
                   {
-                      statusMerging = false;
-                      Log.d(TAG, "-----getMergedRootList():NO_COMPARISON "+" rootElementFile1==null && rootElementFile2==null");
+                      mStatusMerging = false;
+                      Log.d(TAG, "-----getMergedRootList():NO_COMPARISON "+" mRootElementFile1==null && mRootElementFile2==null");
                       break OUTERLOOP;
                   }
                   /*If the element exists in File1 list add it to the final list*/
                   else if(rootElementFile1!=null && rootElementFile2==null)
                   {
                       finalRootList.add(rootElementFile1);
-                      statusMerging = true;
+                      mStatusMerging = true;
                   }
                    /*If the element exists in File2 list add it to the final list*/
                   else if(rootElementFile1==null && rootElementFile2!=null)
                   {
                       finalRootList.add(rootElementFile2);
-                      statusMerging = true;
+                      mStatusMerging = true;
                   }
                   /*If the element exists in both the lists then check the file priority.*/
                   else if(rootElementFile1!=null && rootElementFile2!=null)
                   {
                       /*If the File 1 has more priority then add the element form File1 list*/
-                      if(fileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
+                      if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
                       {
                           finalRootList.add(rootElementFile1);
-                          statusMerging = true;
+                          mStatusMerging = true;
                       }
                       /*If the File 2 has more priority then add the element form File2 list*/
-                      else  if(fileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE2)
+                      else  if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE2)
                       {
                           finalRootList.add(rootElementFile2);
-                          statusMerging = true;
+                          mStatusMerging = true;
                       }
                   }
               }
@@ -588,13 +583,13 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                   if(rootElementFile2!=null)
                   {
                       finalRootList.add(rootElementFile2);
-                      statusMerging = true;
+                      mStatusMerging = true;
                   }
                   /*If element does not exists in File 2 list break the loop as element was not found
                   * in either of the lists*/
                   else
                   {
-                      statusMerging = false;
+                      mStatusMerging = false;
                       Log.d(TAG, "-----getMergedRootList():NO_COMPARISON "+" (listRootFile1==null || listRootFile1.size()==0)&&(listRootFile2!=null&&listRootFile2.size()>0)");
                       break OUTERLOOP;
                   }
@@ -609,13 +604,13 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                   if(rootElementFile1!=null)
                   {
                       finalRootList.add(rootElementFile1);
-                      statusMerging = true;
+                      mStatusMerging = true;
                   }
                   /*If element does not exists in File 1 list break the loop as element was not found
                   * in either of the lists*/
                   else
                   {
-                      statusMerging = false;
+                      mStatusMerging = false;
                       Log.d(TAG, "-----getMergedRootList():NO_COMPARISON "+" (listRootFile1!=null&&listRootFile1.size()>0)&&(listRootFile2==null&&listRootFile2.size()==0)");
                       break OUTERLOOP;
                   }
@@ -636,7 +631,7 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
 
 
         //Get all initial Node attributes set by the user
-        List<NodeElementPOJO> initialNodes = initialParameterList.getInitialNodeAttributeList();
+        List<NodeElementPOJO> initialNodes = mInitialParameterList.getInitialNodeAttributeList();
 
         NodeElementPOJO nodeElementPOJO=null;
 
@@ -665,6 +660,8 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
             modeOfComparison=nodeElementPOJO.getModeOfComparison();
             elementName=nodeElementPOJO.getElementName();
 
+            isSuccess=false;
+
             if(!(elementType.equals(ComparisonConstants.NODE)||
                     elementType.equals(ComparisonConstants.ATTRIBUTE)||
                     elementType.equals(ComparisonConstants.TEXT)||
@@ -684,19 +681,22 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
 
                     String []getElementNames=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
 
-                     if(getElementNames.length<2)
+                    /* if(getElementNames.length<2)
                      {
                          isWriteSuccess=false;
                          Log.d(TAG,"writeNodesToXml:[getElementNames.length<2]: break loop---------");
                          break OUTER_LOOP;
-                     }
+                     }*/
 
 
                     if(modeOfComparison==ComparisonConstants.NO_COMPARISON)
                     {
-                        if(fileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
+                        if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
                         {
-                            if(addFullNodeToRoot(rootElementFile1, getElementNames[1], rootElementFinal)){
+                            mHierarchy=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
+                            getElementByName(rootElementFile1, rootElementFinal);
+
+                            if(isSuccess){
 
                                 isWriteSuccess=true;
                             }
@@ -709,14 +709,17 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
 
                         }else {
 
-                            if(addFullNodeToRoot(rootElementFile2, getElementNames[1], rootElementFinal)){
+                            mHierarchy=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
+                            getElementByName(rootElementFile2, rootElementFinal);
+
+                            if(isSuccess){
 
                                 isWriteSuccess=true;
                             }
                             else
                             {
                                 isWriteSuccess=false;
-                                Log.d(TAG,"writeNodesToXml:[NO_COMPARISON][PRIORITY_FILE1]: break loop---------");
+                                Log.d(TAG,"writeNodesToXml:[NO_COMPARISON][PRIORITY_FILE2]: break loop---------");
                                 break OUTER_LOOP;
                             }
 
@@ -726,15 +729,17 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                     }
                     else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE1)
                     {
+                        mHierarchy=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
+                        getElementByName(rootElementFile1, rootElementFinal);
 
-                        if(addFullNodeToRoot(rootElementFile1, getElementNames[1], rootElementFinal)){
+                        if(isSuccess){
 
                             isWriteSuccess=true;
                         }
                         else
                         {
                             isWriteSuccess=false;
-                            Log.d(TAG,"writeNodesToXml:[NO_COMPARISON][PRIORITY_FILE1]: break loop---------");
+                            Log.d(TAG,"writeNodesToXml:[PICK_FROM_FILE1]: break loop---------");
                             break OUTER_LOOP;
                         }
 
@@ -743,14 +748,21 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
                     }
                     else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE2)
                     {
-                        if(addFullNodeToRoot(rootElementFile2, getElementNames[1], rootElementFinal)){
+                        /*if(addFullNodeToRoot(rootElementFile2, getElementNames[1], rootElementFinal)){
+
+                            isWriteSuccess=true;
+                        }*/
+                        mHierarchy=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
+                        getElementByName(rootElementFile2, rootElementFinal);
+
+                        if(isSuccess){
 
                             isWriteSuccess=true;
                         }
                         else
                         {
                             isWriteSuccess=false;
-                            Log.d(TAG,"writeNodesToXml:[NO_COMPARISON][PRIORITY_FILE1]: break loop---------");
+                            Log.d(TAG,"writeNodesToXml:[PICK_FROM_FILE2]: break loop---------");
                             break OUTER_LOOP;
                         }
 
@@ -879,47 +891,39 @@ void addInitialNodeParameters(String keyChildName,String keyChildValue,String va
 
     }
 
-
-
-    private boolean addNode(Element mainElement,String elementAddress,Element finalElement)
+    private void getElementByName(Element rootElement,Element finalElement)
     {
 
-        boolean isElementExists=false;
+        for(int j=0;j<rootElement.getChildCount();j++)
+        {
+            Element childElement=rootElement.getElement(j);
 
-        String [] splitElementNames=elementAddress.split(ComparisonConstants.ABSOLUTE_PATH);
-        int length=splitElementNames.length;
-        try {
-
-            while(counter<length)
+            if( childElement!=null && (mHierarchy[mIndex].equals(childElement.getName())))
             {
-                for(int i=0;i<mainElement.getChildCount();i++)
+                if(mIndex==0)
                 {
-
-                    Element element = mainElement.getElement("",splitElementNames[i]);
-
-                    if(element!=null && element.getName().equals(splitElementNames[length-1]))
-                    {
-                        finalElement.addChild(org.kxml2.kdom.Node.ELEMENT,element);
-                        isElementExists=true;
-                    }
-
+                    mNodeToBeAdded=childElement;
                 }
+                if(mIndex==mHierarchy.length-1)
+                {
+                    isSuccess=true;
+                    finalElement.addChild(org.kxml2.kdom.Node.ELEMENT,mNodeToBeAdded);
+                    mNodeToBeAdded=null;
+                    mIndex=0;
 
-                counter++;
+                }else
+                {
+                      mIndex++;
+                     getElementByName(childElement,finalElement);
+                }
             }
 
-
-
-        }
-        catch (Exception e)
-        {
-            isElementExists=false;
-            e.printStackTrace();
         }
 
 
-        return isElementExists;
     }
+
+
     //--------------------------------------------------------------------------------------------------
     /*This function searches for a element searchElement in list listElements and returns the
       searched element from the list. If no element found it will return null object*/
