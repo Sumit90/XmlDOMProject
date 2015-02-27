@@ -149,7 +149,6 @@ public class MainActivity extends ActionBarActivity {
 
             mInitialParameterList =new InitialParameterList();
 
-            //addInitialRootParameters("fastLogcodes",ComparisonConstants.COMPARE_EQUAL);
             addInitialRootParameters("@A",ComparisonConstants.COMPARE_EQUAL);
             addInitialRootParameters("@B",ComparisonConstants.COMPARE_GREATER_FILE1);
             addInitialRootParameters("@C",ComparisonConstants.COMPARE_GREATER_FILE2);
@@ -160,7 +159,7 @@ public class MainActivity extends ActionBarActivity {
             addInitialRootParameters("@H",ComparisonConstants.NO_COMPARISON);
 
             addInitialNodeParameters("","","","","Lte",
-                    null,ComparisonConstants.NODE,ComparisonConstants.PICK_FROM_FILE1,"Lte/A");
+                    null,ComparisonConstants.NODE,ComparisonConstants.PICK_FROM_FILE1,"Lte/B/C");
 
             addInitialNodeParameters("","","","","Gsm",
                     null,ComparisonConstants.NODE,ComparisonConstants.PICK_FROM_FILE2,"Gsm/A");
@@ -836,7 +835,7 @@ private boolean compareAndMergeRootParameters(Element rootElementFinal,Element m
             elementName=nodeElementPOJO.getElementName();
 
             mIsSuccess =false;
-
+            mIndex=0;
             if(!(elementType.equals(ComparisonConstants.NODE)||
                     elementType.equals(ComparisonConstants.ATTRIBUTE)||
                     elementType.equals(ComparisonConstants.TEXT)||
