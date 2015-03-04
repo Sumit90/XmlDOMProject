@@ -9,10 +9,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import org.kxml2.kdom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
-import org.xmlpull.v1.XmlPullParser;
+import org.kxml2.kdom.Node;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.FileNotFoundException;
@@ -47,6 +45,17 @@ public class MainActivity extends ActionBarActivity {
     private int mIndex=0;
     private Element mNodeToBeAdded;
     boolean mIsSuccess =false;
+    private String mKeyChildName="";
+    private String mValueChildName="";
+    private String mElementType="";
+    private int mModeOfComparison=0;
+    private String mElementPath="";
+    private List<NodeElementPOJO> mNodeListFile1;
+    private List<NodeElementPOJO> mNodeListFile2;
+    private List<NodeElementPOJO> mNodeListFinal;
+    private Element mParentNode=null;
+    private Element mParentElement;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +71,8 @@ public class MainActivity extends ActionBarActivity {
                 try {
 
                     if (init()) {
+
+
                         //get the root elements of the XML files
                         mRootElementFile1 = mParseFile1.parseRootElement();
                         mRootElementFile2 = mParseFile2.parseRootElement();
@@ -135,6 +146,26 @@ public class MainActivity extends ActionBarActivity {
 
         try {
 
+              mWriteFile=null;
+              mRootElementFile1=null;
+              mRootElementFile2=null;
+              mRootElementFinal=null;
+              mHierarchy=null;
+              mIndex=0;
+              mNodeToBeAdded=null;
+              mIsSuccess =false;
+              mKeyChildName="";
+              mValueChildName="";
+              mElementType="";
+              mModeOfComparison=0;
+              mElementPath="";
+              mNodeListFile1=null;
+              mNodeListFile2=null;
+              mNodeListFinal=null;
+              mParentNode=null;
+              mParentElement=null;
+
+
           //----------------get the input streams of file here from user----------------------------
             mInputStreamFile1 = getResources().getAssets().open("LogCodes.xml");
             mInputStreamFile2 = getResources().getAssets().open("LogCodes1.xml");
@@ -144,25 +175,44 @@ public class MainActivity extends ActionBarActivity {
             mParseFile1 = new XmlParser(mInputStreamFile1);
             mParseFile2 =  new XmlParser(mInputStreamFile2);
 
+            mNodeListFile1=new ArrayList<NodeElementPOJO>();
+            mNodeListFile2=new ArrayList<NodeElementPOJO>();
+            mNodeListFinal=new ArrayList<NodeElementPOJO>();
+
             mFileParameterPOJO =new FileParameterPOJO(mInputStreamFile1, mInputStreamFile2
-                    ,ComparisonConstants.PRIORITY_FILE2,"LogCodes.xml","/sdcard/FTA/Log/",true);
+                    ,ComparisonConstants.PRIORITY_FILE1, "LogCodes1.xml","/sdcard/FTA/Log/",true);
 
             mInitialParameterList =new InitialParameterList();
 
-            addInitialRootParameters("@A",ComparisonConstants.COMPARE_EQUAL);
-            addInitialRootParameters("@B",ComparisonConstants.COMPARE_GREATER_FILE1);
-            addInitialRootParameters("@C",ComparisonConstants.COMPARE_GREATER_FILE2);
-            addInitialRootParameters("@D",ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1);
-            addInitialRootParameters("@E",ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2);
-            addInitialRootParameters("@F",ComparisonConstants.PICK_FROM_FILE1);
-            addInitialRootParameters("@G",ComparisonConstants.PICK_FROM_FILE2);
-            addInitialRootParameters("@H",ComparisonConstants.NO_COMPARISON);
+            addInitialRootParameters("@version",ComparisonConstants.COMPARE_EQUAL);
+            addInitialRootParameters("@name",ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1);
 
-            addInitialNodeParameters("","","","","Lte",
-                    null,ComparisonConstants.NODE,ComparisonConstants.PICK_FROM_FILE1,"Lte/B/C");
 
-            addInitialNodeParameters("","","","","Gsm",
-                    null,ComparisonConstants.NODE,ComparisonConstants.PICK_FROM_FILE2,"Gsm/A");
+            /*addInitialNodeParameters("Id", "", "Name", "", "Class/Myclass/Employee",
+                    null, ComparisonConstants.KEY_VALUE, ComparisonConstants.COMPARE_GREATER_FILE2,true);
+
+            addInitialNodeParameters("Roll", "", "Grade", "", "Student",
+                    null, ComparisonConstants.KEY_VALUE, ComparisonConstants.COMPARE_GREATER_FILE2,true);*/
+
+            addInitialNodeParameters("name", "", "value", "", "LTE/Lte_logcode",
+                    null, ComparisonConstants.KEY_VALUE, ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2,true);
+
+            addInitialNodeParameters("name", "", "value", "", "WCDMA",
+                    null, ComparisonConstants.NODE, ComparisonConstants.NO_COMPARISON,true);
+
+            addInitialNodeParameters("name", "", "value", "", "GSM",
+                    null, ComparisonConstants.NODE, ComparisonConstants.NO_COMPARISON,true);
+
+            addInitialNodeParameters("name", "", "value", "", "CDMA",
+                    null, ComparisonConstants.NODE, ComparisonConstants.NO_COMPARISON,true);
+
+            addInitialNodeParameters("name", "", "value", "", "EVDO",
+                    null, ComparisonConstants.NODE, ComparisonConstants.NO_COMPARISON,true);
+
+
+            /*addInitialNodeParameters("Roll", "", "Name", "", "Student",
+                    null, ComparisonConstants.NODE, ComparisonConstants.PICK_FROM_FILE1,true);*/
+
 
             printRootList(mInitialParameterList.getInitialRootList());
 
@@ -208,13 +258,14 @@ public class MainActivity extends ActionBarActivity {
 //--------------------------------------------------------------------------------------------------
 //This function is used to add Initial Node attributes to be used for comparing and extracting
 void addInitialNodeParameters(String keyChildName,String keyChildValue,String valueChildName,
-                              String valueChildValue, String parentReferenceAddress,
-                              Node parentReferenceNode,String nodeType, int modeOfComparison,
-                              String elementName )
+                              String valueChildValue, String elementPath,
+                              Element parentReferenceNode,String nodeType, int modeOfComparison,
+                              boolean isToBeAdded
+                               )
 {
     mInitialParameterList.addInitialNodeAttribute(new NodeElementPOJO(keyChildName, keyChildValue,
-            valueChildName, valueChildValue, parentReferenceAddress, parentReferenceNode, nodeType,
-            modeOfComparison, null, elementName));
+            valueChildName, valueChildValue, elementPath, parentReferenceNode, nodeType,
+            modeOfComparison,isToBeAdded,null));
 
 }
 
@@ -243,7 +294,8 @@ private boolean compareAndMergeRootParameters(Element rootElementFinal,Element m
 
     if(initialRootList==null || initialRootList.size()==0)
     {
-        return isSuccess;
+        Log.d(TAG,"----[compareAndMergeRootParameters]:initialRootList.size()==0------");
+        return isSuccess=true;
     }
 
     OUTER_LOOP : for(int counter=0;counter<initialRootList.size();counter++)
@@ -475,325 +527,6 @@ private boolean compareAndMergeRootParameters(Element rootElementFinal,Element m
     }
 
 
-//--------------------------------------------------------------------------------------------------
-    private List<RootElementPOJO> getMergedRootList(List<RootElementPOJO> listRootFile1,
-                               List<RootElementPOJO> listRootFile2,List<RootElementPOJO> listRootInitial) {
-
-        // This is the list that will contain merged elements.
-        List<RootElementPOJO> finalRootList=null;
-
-        // If the user has not provided any initial Root attribute list
-        if(listRootInitial==null )
-        {
-            Log.d(TAG,"-----getMergedRootList(): listRootInitial==null");
-        }
-        // If no user specified attribute exists in any of the list
-        else if((listRootFile1==null || listRootFile1.size()==0) && (listRootFile2==null || listRootFile2.size()==0))
-        {
-            Log.d(TAG,"-----getMergedRootList(): listRootFile1==null && listRootFile2==null");
-        }
-        else
-        {
-            finalRootList=new ArrayList<RootElementPOJO>();
-            RootElementPOJO rootElement=null;
-            RootElementPOJO rootElementFile1=null;
-            RootElementPOJO rootElementFile2=null;
-
-            int modeComparison=0;
-            OUTERLOOP:for(int counter=0;counter<listRootInitial.size();counter++) {
-                rootElement = listRootInitial.get(counter);
-
-                //get the mode how element has to be pushed in final XML
-                modeComparison = mInitialParameterList.getModeComparison(rootElement.getElementName());
-
-
-                if (modeComparison == ComparisonConstants.COMPARE_EQUAL
-                        || modeComparison == ComparisonConstants.COMPARE_GREATER_FILE1
-                        || modeComparison == ComparisonConstants.COMPARE_GREATER_FILE2
-                        || modeComparison == ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1
-                        || modeComparison == ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2) {
-                    //If file1 does not contain any of the elements exit the loop
-                    if (listRootFile1 == null || listRootFile1.size() == 0) {
-                        Log.d(TAG, "-----getMergedRootList(): listRootFile1==null");
-                        mStatusMerging = false;
-                        break OUTERLOOP;
-                    }
-                    //If file2 does not contain any of the elements exit the loop
-                    else if (listRootFile2 == null || listRootFile2.size() == 0) {
-                        Log.d(TAG, "-----getMergedRootList(): listRootFile2==null");
-                        mStatusMerging = false;
-                        break OUTERLOOP;
-                    }
-
-
-                // Check if element exists in File1 Root list
-                rootElementFile1 = getElement(listRootFile1, rootElement);
-
-                   /*If the required element is found in File1 then check for the element in File2*/
-                if (rootElementFile1 != null) {
-                    rootElementFile2 = getElement(listRootFile2, rootElement);
-
-                }
-                   /*If the required element not found in File1 then break the loop*/
-                else {
-                    mStatusMerging = false;
-                    Log.d(TAG, "-----getMergedRootList(): " + rootElement.getElementName() + " Not Found in File1");
-                    break OUTERLOOP;
-                }
-
-                    /* If the required element is found in File1 and File 2 then add the element
-                    * in final list after checking which file has more priority*/
-
-                 if (rootElementFile1 != null && rootElementFile2 != null) {
-                    // If mode of comparison is compare for equal check for equality of element values
-//--------------------------------------------------------------------------------------------------
-                    if (modeComparison == ComparisonConstants.COMPARE_EQUAL) {
-                     /*Compare the attribute values of File1 and File2. If they are equal add it to
-                        final list else exit the outer loop*/
-                        if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
-                                ComparisonConstants.COMPARE_EQUAL)) {
-                           /*If file1 has more priority then add the element in final list from file1 list*/
-                            if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
-                                finalRootList.add(rootElementFile1);
-                            }
-                            /*If file2 has more priority then add the element in final list from file2 list*/
-                            else if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE2) {
-                                finalRootList.add(rootElementFile2);
-                            }
-                            mStatusMerging = true;
-                        }
-                        // If the attribute value if File1 and File2 are not equal
-                        else {
-                            Log.d(TAG, "-----getMergedRootList():COMPARE_EQUAL " + rootElementFile1.getElementValue() + " != " + rootElementFile2.getElementValue());
-                            mStatusMerging = false;
-                            break OUTERLOOP;
-                        }
-
-                    }
-//--------------------------------------------------------------------------------------------------
-                     /*Check if the attribute value is greater in File1. If true add the attribute
-                       from File1 */
-                    else if (modeComparison == ComparisonConstants.COMPARE_GREATER_FILE1) {
-                        if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
-                                ComparisonConstants.COMPARE_GREATER_FILE1)) {
-
-                            finalRootList.add(rootElementFile1);
-                            mStatusMerging = true;
-                        } else {
-                            Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE1 " + rootElementFile1.getElementValue() + " < " + rootElementFile2.getElementValue());
-                            mStatusMerging = false;
-                            break OUTERLOOP;
-                        }
-                    }
-//--------------------------------------------------------------------------------------------------
-                    /*Check if the attribute value is greater in File2. If true add the attribute
-                     from File2 */
-                    else if (modeComparison == ComparisonConstants.COMPARE_GREATER_FILE2) {
-                        if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
-                                ComparisonConstants.COMPARE_GREATER_FILE2)) {
-                            finalRootList.add(rootElementFile2);
-                            mStatusMerging = true;
-                        } else {
-                            Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE2 " + rootElementFile2.getElementValue() + " < " + rootElementFile1.getElementValue());
-                            mStatusMerging = false;
-                            break OUTERLOOP;
-                        }
-                    }
-//--------------------------------------------------------------------------------------------------
-                    /*Check if the attribute value is greater or equal in File1. If true add the attribute
-                      from File1 */
-                    else if (modeComparison == ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1) {
-                        if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
-                                ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1)) {
-                            finalRootList.add(rootElementFile1);
-                            mStatusMerging = true;
-                        } else {
-                            Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE2 " + rootElementFile1.getElementValue() + " < !=" + rootElementFile2.getElementValue());
-                            mStatusMerging = false;
-                            break OUTERLOOP;
-                        }
-                    }
-//--------------------------------------------------------------------------------------------------
-
-                    /*Check if the attribute value is greater or equal in File2. If true add the attribute
-                      from File2 */
-                    else if (modeComparison == ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2) {
-                        if (compareAttributeValues(rootElementFile1.getElementValue(), rootElementFile2.getElementValue(),
-                                ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2)) {
-                            finalRootList.add(rootElementFile2);
-                            mStatusMerging = true;
-                        } else {
-                            Log.d(TAG, "-----getMergedRootList():COMPARE_GREATER_FILE2 " + rootElementFile2.getElementValue() + " < 1=" + rootElementFile1.getElementValue());
-                            mStatusMerging = false;
-                            break OUTERLOOP;
-                        }
-                    }
-//--------------------------------------------------------------------------------------------------
-
-                 }
-                     /*If the required element not found in File2 then break the loop*/
-                else {
-                    if (rootElementFile2 == null) {
-                        Log.d(TAG, "-----getMergedRootList(): " + rootElement.getElementName() + " Not Found File2");
-                        mStatusMerging = false;
-                    }
-
-                    break OUTERLOOP;
-                  }
-            }
-             /*Always Pick the element from the File1. If element exists it will be added in final
-             * list otherwise loop will get break.*/
-            else if(modeComparison==ComparisonConstants.PICK_FROM_FILE1)
-            {
-                //If file1 does not contain any of the elements exit the loop
-                if (listRootFile1 == null || listRootFile1.size() == 0) {
-                    Log.d(TAG, "-----getMergedRootList(): listRootFile1==null");
-                    mStatusMerging = false;
-                    break OUTERLOOP;
-                }
-                else {
-                    // Check if element exists in File1 Root list
-                    rootElementFile1 = getElement(listRootFile1, rootElement);
-
-                   /*If the required element is found in File1 then add it the final list*/
-                    if (rootElementFile1 != null) {
-                        finalRootList.add(rootElementFile2);
-                        mStatusMerging = true;
-                    }
-                   /*If the required element not found in File1 then break the loop*/
-                    else {
-                        mStatusMerging = false;
-                        Log.d(TAG, "-----getMergedRootList():PICK_FROM_FILE1 " + rootElement.getElementName() + " Not Found in File1");
-                        break OUTERLOOP;
-                    }
-
-                }
-            }
-             /*Always Pick the element from the File2. If element exists it will be added in final
-             * list otherwise loop will get break.*/
-                else if(modeComparison==ComparisonConstants.PICK_FROM_FILE2)
-            {
-                //If file2 does not contain any of the elements exit the loop
-                if (listRootFile2 == null || listRootFile2.size() == 0) {
-                    Log.d(TAG, "-----getMergedRootList(): listRootFile2==null");
-                    mStatusMerging = false;
-                    break OUTERLOOP;
-                }
-                else {
-                    // Check if element exists in File2 Root list
-                    rootElementFile2 = getElement(listRootFile2, rootElement);
-
-                   /*If the required element is found in File1 then add it the final list*/
-                    if (rootElementFile2 != null) {
-                        finalRootList.add(rootElementFile2);
-                        mStatusMerging = true;
-                    }
-                   /*If the required element not found in File2 then break the loop*/
-                    else {
-                        mStatusMerging = false;
-                        Log.d(TAG, "-----getMergedRootList():PICK_FROM_FILE2 " + rootElement.getElementName() + " Not Found in File2");
-                        break OUTERLOOP;
-                    }
-
-                }
-
-            }
-             /*If user has specified the mode of comparison to be NO_COMPARISON*/
-            else if(modeComparison==ComparisonConstants.NO_COMPARISON)
-            {
-              /* If both the file list are non empty then check if the element exists in both the lists.
-              */
-              if((listRootFile1!=null&&listRootFile1.size()>0)&&(listRootFile2!=null&&listRootFile2.size()>0))
-              {
-                  rootElementFile1=getElement(listRootFile1, rootElement);
-                  rootElementFile2=getElement(listRootFile2, rootElement);
-
-               /*If the element does not exists in both of the lists then break the loop.*/
-                  if(rootElementFile1==null && rootElementFile2==null)
-                  {
-                      mStatusMerging = false;
-                      Log.d(TAG, "-----getMergedRootList():NO_COMPARISON "+" mRootElementFile1==null && mRootElementFile2==null");
-                      break OUTERLOOP;
-                  }
-                  /*If the element exists in File1 list add it to the final list*/
-                  else if(rootElementFile1!=null && rootElementFile2==null)
-                  {
-                      finalRootList.add(rootElementFile1);
-                      mStatusMerging = true;
-                  }
-                   /*If the element exists in File2 list add it to the final list*/
-                  else if(rootElementFile1==null && rootElementFile2!=null)
-                  {
-                      finalRootList.add(rootElementFile2);
-                      mStatusMerging = true;
-                  }
-                  /*If the element exists in both the lists then check the file priority.*/
-                  else if(rootElementFile1!=null && rootElementFile2!=null)
-                  {
-                      /*If the File 1 has more priority then add the element form File1 list*/
-                      if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
-                      {
-                          finalRootList.add(rootElementFile1);
-                          mStatusMerging = true;
-                      }
-                      /*If the File 2 has more priority then add the element form File2 list*/
-                      else  if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE2)
-                      {
-                          finalRootList.add(rootElementFile2);
-                          mStatusMerging = true;
-                      }
-                  }
-              }
-              /*If File 1 list does not contain any element but File 2 list contains elements*/
-              else if ((listRootFile1==null || listRootFile1.size()==0)&&(listRootFile2!=null&&listRootFile2.size()>0))
-              {
-                  rootElementFile2=getElement(listRootFile2, rootElement);
-                  /*If element exists in File 2 list add it to final list*/
-                  if(rootElementFile2!=null)
-                  {
-                      finalRootList.add(rootElementFile2);
-                      mStatusMerging = true;
-                  }
-                  /*If element does not exists in File 2 list break the loop as element was not found
-                  * in either of the lists*/
-                  else
-                  {
-                      mStatusMerging = false;
-                      Log.d(TAG, "-----getMergedRootList():NO_COMPARISON "+" (listRootFile1==null || listRootFile1.size()==0)&&(listRootFile2!=null&&listRootFile2.size()>0)");
-                      break OUTERLOOP;
-                  }
-
-
-              }
-              /*If File 2 list does not contain any element but File 1 list contains elements*/
-              else if ((listRootFile1!=null&&listRootFile1.size()>0)&&(listRootFile2==null&&listRootFile2.size()==0))
-              {
-                  rootElementFile1=getElement(listRootFile1,rootElement);
-                  /*If element exists in File 1 list add it to final list*/
-                  if(rootElementFile1!=null)
-                  {
-                      finalRootList.add(rootElementFile1);
-                      mStatusMerging = true;
-                  }
-                  /*If element does not exists in File 1 list break the loop as element was not found
-                  * in either of the lists*/
-                  else
-                  {
-                      mStatusMerging = false;
-                      Log.d(TAG, "-----getMergedRootList():NO_COMPARISON "+" (listRootFile1!=null&&listRootFile1.size()>0)&&(listRootFile2==null&&listRootFile2.size()==0)");
-                      break OUTERLOOP;
-                  }
-              }
-            }
-          }
-       }
-
-
-        return finalRootList;
-
-
-    }
-
     private boolean writeNodesToXml(Element rootElementFile1,Element rootElementFile2,Element rootElementFinal)
     {
         boolean isWriteSuccess=false;
@@ -809,58 +542,43 @@ private boolean compareAndMergeRootParameters(Element rootElementFinal,Element m
 
         NodeElementPOJO nodeElementPOJO=null;
 
-        String keyChildName="";
-        String keyChildValue="";
-        String valueChildName="";
-        String valueChildValue="";
-        String parentReferenceAddress="";
-        Node parentReferenceNode=null;
-        String elementType="";
-        int modeOfComparison=0;
-        NodeList nodeList=null;
-        String elementName="";
+
 
         OUTER_LOOP:for (int count=0;count<initialNodes.size();count++) {
 
             nodeElementPOJO = initialNodes.get(count);
 
-            elementType=nodeElementPOJO.getElementType();
-            keyChildName=nodeElementPOJO.getKeyChildName();
-            keyChildValue=nodeElementPOJO.getKeyChildValue();
-            valueChildName=nodeElementPOJO.getValueChildName();
-            valueChildValue=nodeElementPOJO.getValueChildValue();
-            parentReferenceAddress=nodeElementPOJO.getParentReferenceAddress();
-            parentReferenceNode=nodeElementPOJO.getParentReferenceNode();
-            modeOfComparison=nodeElementPOJO.getModeOfComparison();
-            elementName=nodeElementPOJO.getElementName();
-
+            mElementType=nodeElementPOJO.getElementType();
+            mKeyChildName=nodeElementPOJO.getKeyChildName();
+            mValueChildName=nodeElementPOJO.getValueChildName();
+            mElementPath=nodeElementPOJO.getElementPath();
+            mModeOfComparison=nodeElementPOJO.getModeOfComparison();
             mIsSuccess =false;
             mIndex=0;
-            if(!(elementType.equals(ComparisonConstants.NODE)||
-                    elementType.equals(ComparisonConstants.ATTRIBUTE)||
-                    elementType.equals(ComparisonConstants.TEXT)||
-                    elementType.equals(ComparisonConstants.KEY_ATTRIBUTE)||
-                    elementType.equals(ComparisonConstants.KEY_TEXT)||
-                    elementType.equals(ComparisonConstants.VALUE)||
-                    elementType.equals(ComparisonConstants.ATTRIBUTE_TEXT)))
+            mNodeToBeAdded=null;
+            mParentNode=null;
+            if(!(mElementType.equals(ComparisonConstants.NODE)||
+                    mElementType.equals(ComparisonConstants.KEY_VALUE)
+            ))
             {
-                Log.d(TAG,"[addNodesToList]: break loop---- element type wrong main-----");
+                Log.d(TAG,"[writeNodesToXml]: break loop---- element type wrong main-----");
                 break OUTER_LOOP;
             }
 
 
-            switch (elementType)
+            switch (mElementType)
             {
                 case ComparisonConstants.NODE:
 
-                    mHierarchy=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
+                    mHierarchy=mElementPath.split(ComparisonConstants.ABSOLUTE_PATH);
 
 
-                    if(modeOfComparison==ComparisonConstants.NO_COMPARISON)
+                    if(mModeOfComparison==ComparisonConstants.NO_COMPARISON)
                     {
                         if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
                         {
                             searchAndMergeNodeElements(rootElementFile1, rootElementFinal);
+
 
                             if(mIsSuccess){
 
@@ -892,7 +610,7 @@ private boolean compareAndMergeRootParameters(Element rootElementFinal,Element m
                         }
 
                     }
-                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE1)
+                    else if(mModeOfComparison==ComparisonConstants.PICK_FROM_FILE1)
                     {
                         searchAndMergeNodeElements(rootElementFile1, rootElementFinal);
 
@@ -910,7 +628,7 @@ private boolean compareAndMergeRootParameters(Element rootElementFinal,Element m
 
 
                     }
-                    else if(modeOfComparison==ComparisonConstants.PICK_FROM_FILE2)
+                    else if(mModeOfComparison==ComparisonConstants.PICK_FROM_FILE2)
                     {
                         searchAndMergeNodeElements(rootElementFile2, rootElementFinal);
 
@@ -936,7 +654,84 @@ private boolean compareAndMergeRootParameters(Element rootElementFinal,Element m
 
                     break;
 
+
+                case ComparisonConstants.KEY_VALUE:
+                    mHierarchy=mElementPath.split(ComparisonConstants.ABSOLUTE_PATH);
+
+                   // searchKeyValueNode(mNodeListFile1, mRootElementFile1);
+                    searchKeyValueNode(mNodeListFile1, mRootElementFile1);
+
+                    if(mIsSuccess && mNodeListFile1!=null && mNodeListFile1.size()>0)
+                    {
+                        mIsSuccess =false;
+                       // searchKeyValueNode(mNodeListFile2, mRootElementFile2);
+
+                        mNodeToBeAdded=null;
+                        mIndex=0;
+                        mParentNode=null;
+                        searchKeyValueNode(mNodeListFile2, mRootElementFile2);
+
+                        if(mIsSuccess && mNodeListFile2!=null && mNodeListFile2.size()>0)
+                        {
+                            mIsSuccess =false;
+                            mNodeToBeAdded=null;
+                            mIndex=0;
+                            mParentNode=null;
+
+                            compareAndMergeKeyNode(mNodeListFile1,mNodeListFile2,mNodeListFinal);
+
+                            if(mIsSuccess && mNodeListFinal!=null && mNodeListFinal.size()>0)
+                            {
+                                mIsSuccess =false;
+                                mNodeToBeAdded=null;
+                                mIndex=0;
+                                mParentNode=null;
+
+
+                                addNodeElementsToFinalFile(mNodeListFinal,mRootElementFinal);
+
+                                if(mIsSuccess)
+                                isWriteSuccess=true;
+
+                            }
+                            else {
+
+                                isWriteSuccess=false;
+                                Log.d(TAG, "writeNodesToXml:[NODE]:mIsSuccess && mNodeListFile1!=null && mNodeListFile1.size()>0-----");
+                                break OUTER_LOOP;
+                            }
+
+
+                        }
+                        else
+                        {
+                            isWriteSuccess=false;
+                            Log.d(TAG, "writeNodesToXml:[NODE]:mIsSuccess && mNodeListFile2!=null && mNodeListFile2.size()>0-----");
+                            break OUTER_LOOP;
+                        }
+
+                    }
+                    else
+                    {
+                        isWriteSuccess=false;
+                        Log.d(TAG, "writeNodesToXml:[NODE]:mIsSuccess && mNodeListFile1!=null && mNodeListFile1.size()>0-----");
+                        break OUTER_LOOP;
+
+                    }
+
+
+
+                    break;
             }
+
+            mHierarchy=null;
+            mIndex=0;
+            mParentNode=null;
+            mParentElement=null;
+            mIsSuccess=false;
+            mNodeListFile1.clear();
+            mNodeListFile2.clear();
+            mNodeListFinal.clear();
 
         }
         return isWriteSuccess;
@@ -944,6 +739,141 @@ private boolean compareAndMergeRootParameters(Element rootElementFinal,Element m
 
     }
 
+
+    private void addNodeElementsToFinalFile(List<NodeElementPOJO> nodeElementPOJOList,Element rootElementFinal)
+    {
+        String elementName=nodeElementPOJOList.get(0).getElementPath();
+        NodeElementPOJO nodeElement=null;
+
+
+        if(elementName!=null && elementName.length()>0)
+        {
+            String []splitPath=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
+
+            if(splitPath.length==1)
+            {
+                for(int i=0;i<nodeElementPOJOList.size();i++)
+                {
+                    nodeElement=nodeElementPOJOList.get(i);
+                    rootElementFinal.addChild(Node.ELEMENT,nodeElement.getReferenceNode());
+                    mIsSuccess=true;
+                }
+
+            }
+            else if(splitPath.length==2)
+            {
+                Element parent=nodeElementPOJOList.get(0).getParentNode();
+                Element inner_element=null;
+                Outer_loop:for(int i=0;i<parent.getChildCount();i++)
+                {
+                    inner_element=parent.getElement(i);
+                    if(inner_element!=null && inner_element.getName().equals(mHierarchy[1]))
+                    {
+                        for(int j=0;j<nodeElementPOJOList.size();j++)
+                        {
+                            NodeElementPOJO element=nodeElementPOJOList.get(j);
+
+                            Element keyNameElement=inner_element.getElement("",element.getKeyChildName());
+                            Element valueNameElement=inner_element.getElement("",element.getValueChildName());
+
+                            if(keyNameElement!=null && valueNameElement!=null)
+                            {
+                                if((keyNameElement.getText(0)).equals(element.getKeyChildValue())) {
+
+                                    if (!element.isToBeAdded()) {
+                                        parent.removeChild(i);
+                                    }
+                                    mIsSuccess=true;
+                                    continue Outer_loop;
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+                }
+
+                rootElementFinal.addChild(Node.ELEMENT,parent);
+
+            }
+            else
+            {
+                Element parent=nodeElementPOJOList.get(0).getParentNode();
+                mHierarchy=splitPath;
+                appendNodeKeyValue(nodeElementPOJOList,parent.getParent());
+
+                if(mIsSuccess && mParentElement!=null)
+                {
+                    rootElementFinal.addChild(Node.ELEMENT,mParentElement);
+                }
+
+            }
+
+
+
+
+        }
+
+
+
+    }
+
+    private void appendNodeKeyValue(List<NodeElementPOJO> nodeElementPOJOList,Node parentNodeElement)
+    {
+        for (int i=0;i<parentNodeElement.getChildCount();i++)
+        {
+            Element childElement=parentNodeElement.getElement(i);
+
+            if( childElement!=null && (mHierarchy[mIndex].equals(childElement.getName())))
+            {
+                if(mIndex==0)
+                {
+                    mParentElement=childElement;
+                }
+                if(mIndex==mHierarchy.length-1)
+                {
+                    for(int j=0;j<nodeElementPOJOList.size();j++)
+                    {
+                        NodeElementPOJO nodeElementPOJO=nodeElementPOJOList.get(j);
+
+                        if((childElement.getElement("",nodeElementPOJO.getKeyChildName())!=null)&&
+                                (childElement.getElement("",nodeElementPOJO.getValueChildName())!=null))
+                        {
+                            String keyValue=childElement.getElement("",nodeElementPOJO.getKeyChildName()).getText(0);
+                            String valueValue=childElement.getElement("",nodeElementPOJO.getValueChildName()).getText(0);
+
+                            if((keyValue!=null && keyValue.length()>0) && (valueValue!=null && valueValue.length()>0))
+                            {
+                                if(keyValue.equals(nodeElementPOJO.getKeyChildValue())) {
+
+                                    if (!nodeElementPOJO.isToBeAdded()) {
+                                        parentNodeElement.removeChild(i);
+                                    }
+                                    mIsSuccess=true;
+
+                                }
+                            }
+
+                        }
+
+                    }
+
+
+                }
+                else
+                {
+                    mIndex++;
+                    appendNodeKeyValue(nodeElementPOJOList, childElement);
+                }
+
+
+
+
+            }
+        }
+    }
 
     private void searchAndMergeNodeElements(Element rootElement, Element finalElement)
     {
@@ -977,26 +907,268 @@ private boolean compareAndMergeRootParameters(Element rootElementFinal,Element m
 
     }
 
-
-    //--------------------------------------------------------------------------------------------------
-    /*This function searches for a element searchElement in list listElements and returns the
-      searched element from the list. If no element found it will return null object*/
-    private RootElementPOJO getElement(List<RootElementPOJO> listElements,RootElementPOJO searchElement)
+    private void searchKeyValueNode(List<NodeElementPOJO> nodeElementList, Element rootElement)
     {
-        int l_i=0;
-        RootElementPOJO searchedElement=null;
-        for ( l_i=0;l_i<listElements.size();l_i++)
+        if(mHierarchy.length==0)
         {
-            if(listElements.get(l_i).getElementName().equals(searchElement.getElementName()))
-            {
-                searchedElement=listElements.get(l_i);
-                break;
-            }
+            mIsSuccess =false;
         }
-        return searchedElement;
+        else if(mHierarchy.length==1)
+        {
+            for(int i=0;i<rootElement.getChildCount();i++)
+            {
+                Element childElement=rootElement.getElement(i);
+
+                if( childElement!=null && (mHierarchy[0].equals(childElement.getName())))
+                {
+                    if((childElement.getElement("",mKeyChildName)!=null)&&
+                            (childElement.getElement("",mValueChildName)!=null))
+                    {
+                        String keyValue=childElement.getElement("",mKeyChildName).getText(0);
+                        String valueValue=childElement.getElement("",mValueChildName).getText(0);
+
+                        if((keyValue!=null && keyValue.length()>0) && (valueValue!=null && valueValue.length()>0))
+                        {
+                            mIsSuccess =true;
+                            nodeElementList.add(new NodeElementPOJO(mKeyChildName,keyValue,mValueChildName,valueValue,
+                                    mElementPath,childElement,mElementType,mModeOfComparison,true,null));
+                        }
+
+
+                    }
+                }
+
+            }
+
+        }
+        else {
+
+            for(int j=0;j<rootElement.getChildCount();j++)
+            {
+                Element childElement=rootElement.getElement(j);
+
+                if( childElement!=null && (mHierarchy[mIndex].equals(childElement.getName())))
+                {
+                    if(mIndex==0 )
+                    {
+                        mParentNode=childElement;
+                    }
+                    if(mIndex==mHierarchy.length-2)
+                    {
+                        mNodeToBeAdded=childElement;
+                    }
+                    if(mIndex==mHierarchy.length-1)
+                    {
+                            if((childElement.getElement("",mKeyChildName)!=null)&&
+                                    (childElement.getElement("",mValueChildName)!=null))
+                            {
+                                String keyValue=childElement.getElement("",mKeyChildName).getText(0);
+                                String valueValue=childElement.getElement("",mValueChildName).getText(0);
+
+                                if((keyValue!=null && keyValue.length()>0) && (valueValue!=null && valueValue.length()>0))
+                                {
+                                    mIsSuccess =true;
+                                    nodeElementList.add(new NodeElementPOJO(mKeyChildName,keyValue,mValueChildName,valueValue,
+                                            mElementPath,mNodeToBeAdded,mElementType,mModeOfComparison,true,mParentNode));
+                                }
+                            }
+
+                    }else
+                    {
+                        mIndex++;
+                        searchKeyValueNode(nodeElementList, childElement);
+                    }
+                }
+
+            }
+
+        }
+
     }
 
-//--------------------------------------------------------------------------------------------------
+
+
+    private boolean compareAndMergeKeyNode(List<NodeElementPOJO> nodeElementList1,
+                                        List<NodeElementPOJO> nodeElementList2,
+                                        List<NodeElementPOJO> nodeElementListFinal
+                                        )
+
+    {
+        mIsSuccess=false;
+
+        NodeElementPOJO nodeListElement1=null;
+        NodeElementPOJO nodeListElement2=null;
+        int mode=0;
+
+        if(nodeElementList1.size()==0 || nodeElementList2.size()==0)
+        {
+             return mIsSuccess;
+        }
+
+        for(int l_i=0;l_i<nodeElementList1.size();l_i++)
+        {
+            nodeListElement1=nodeElementList1.get(l_i);
+
+            for(int l_j=0;l_j<nodeElementList2.size();l_j++)
+            {
+                nodeListElement2=nodeElementList2.get(l_j);
+
+                if(((nodeListElement1.getElementPath()).equals(nodeListElement2.getElementPath()))
+                        &&((nodeListElement1.getKeyChildName()).equals(nodeListElement2.getKeyChildName()))
+                        &&((nodeListElement1.getKeyChildValue()).equals(nodeListElement2.getKeyChildValue()))
+                        &&((nodeListElement1.getModeOfComparison())==(nodeListElement2.getModeOfComparison()))
+                        &&((nodeListElement1.getValueChildName()).equals(nodeListElement2.getValueChildName()))
+                        )
+                {
+
+                    mode=nodeListElement1.getModeOfComparison();
+
+                    switch (mode)
+                    {
+                        case ComparisonConstants.NO_COMPARISON:
+
+                                if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
+                                {
+                                    nodeElementListFinal.add(nodeListElement1);
+                                }
+                                else
+                                {
+                                    nodeElementListFinal.add(nodeListElement2);
+                                }
+
+                                mIsSuccess=true;
+
+
+                            break;
+
+                        case ComparisonConstants.COMPARE_GREATER_FILE1:
+
+                            if (compareAttributeValues(nodeListElement1.getValueChildValue(), nodeListElement2.getValueChildValue(),
+                                    ComparisonConstants.COMPARE_GREATER_FILE1)) {
+
+                                nodeElementListFinal.add(nodeListElement1);
+                                mIsSuccess=true;
+                            }
+                            else
+                            {
+                                nodeListElement1.setToBeAdded(false);
+                                nodeElementListFinal.add(nodeListElement1);
+                            }
+
+                            break;
+
+                        case ComparisonConstants.COMPARE_GREATER_FILE2:
+
+                            if (compareAttributeValues(nodeListElement1.getValueChildValue(), nodeListElement2.getValueChildValue(),
+                                    ComparisonConstants.COMPARE_GREATER_FILE2)) {
+
+
+                                nodeElementListFinal.add(nodeListElement2);
+                                mIsSuccess=true;
+                            }
+                            else
+                            {
+                                nodeListElement2.setToBeAdded(false);
+                                nodeElementListFinal.add(nodeListElement2);
+                            }
+
+                            break;
+
+                        case ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1:
+
+                            if (compareAttributeValues(nodeListElement1.getValueChildValue(), nodeListElement2.getValueChildValue(),
+                                    ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1)) {
+
+                                nodeElementListFinal.add(nodeListElement1);
+
+                                mIsSuccess=true;
+
+                            }
+                            else
+                            {
+                                nodeListElement1.setToBeAdded(false);
+                                nodeElementListFinal.add(nodeListElement1);
+                            }
+
+
+                            break;
+
+                        case ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2:
+
+                            if (compareAttributeValues(nodeListElement1.getValueChildValue(), nodeListElement2.getValueChildValue(),
+                                    ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2)) {
+
+                                nodeElementListFinal.add(nodeListElement2);
+
+
+                                mIsSuccess=true;
+                            }
+                            else
+                            {
+                                nodeListElement2.setToBeAdded(false);
+                                nodeElementListFinal.add(nodeListElement2);
+                            }
+
+                            break;
+
+                        case ComparisonConstants.PICK_FROM_FILE1:
+
+                            nodeElementListFinal.add(nodeListElement1);
+
+                            mIsSuccess=true;
+
+                            break;
+
+                        case ComparisonConstants.PICK_FROM_FILE2:
+
+                            nodeElementListFinal.add(nodeListElement2);
+
+                            mIsSuccess=true;
+
+                            break;
+
+                        case ComparisonConstants.COMPARE_EQUAL:
+
+                            if((nodeListElement1.getKeyChildName().equals(nodeListElement2.getKeyChildName()))
+                                    &&(nodeListElement1.getKeyChildValue().equals(nodeListElement2.getKeyChildValue())))
+                        {
+                            if (compareAttributeValues(nodeListElement1.getValueChildValue(), nodeListElement2.getValueChildValue(),
+                                    ComparisonConstants.COMPARE_EQUAL)) {
+
+                                if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
+                                    nodeElementListFinal.add(nodeListElement1);
+
+                                } else {
+                                    nodeElementListFinal.add(nodeListElement2);
+                                }
+                                mIsSuccess = true;
+                            } else {
+                                if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
+                                    nodeListElement1.setToBeAdded(false);
+                                    nodeElementListFinal.add(nodeListElement1);
+
+                                } else {
+                                    nodeListElement2.setToBeAdded(false);
+                                    nodeElementListFinal.add(nodeListElement2);
+                                }
+
+                            }
+                        }
+
+                            break;
+
+                    }
+
+
+                }
+            }
+
+        }
+
+        return mIsSuccess;
+
+    }
+
 
     /*This function will compare the two attribute values on the basis of comparison type and
     * will the return the boolean result*/

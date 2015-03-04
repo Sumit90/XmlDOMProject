@@ -19,25 +19,25 @@ public class InitialParameterList {
     private List<NodeElementPOJO> initialNodeList;
 
 
-    //--------------------------------------------------------------------------------------------------
+
     public InitialParameterList()
     {
         initialRootList =new ArrayList<RootElementPOJO>() ;
         initialNodeList =new ArrayList<NodeElementPOJO>();
 
     }
-    //--------------------------------------------------------------------------------------------------
+
     public void addInitialRoot(RootElementPOJO rootElement)
     {
         initialRootList.add(rootElement);
     }
-    //--------------------------------------------------------------------------------------------------
+
     public List<RootElementPOJO> getInitialRootList()
     {
         return initialRootList;
     }
 
-    //--------------------------------------------------------------------------------------------------
+
     public void addInitialNodeAttribute(NodeElementPOJO nodeElement)
     {
         initialNodeList.add(nodeElement);
@@ -49,21 +49,5 @@ public class InitialParameterList {
         return initialNodeList;
     }
 
-    //--------------------------------------------------------------------------------------------------
-    public int getModeComparison(String attributeName)
-    {
-        int mode=0;
-        for(int count=0;count< initialRootList.size();count++)
-        {
-            RootElementPOJO rootElementPOJO= initialRootList.get(count);
-            if(rootElementPOJO.getElementName().equals(attributeName))
-            {
-                mode=rootElementPOJO.getModeOfComparison();
-                break;
-            }
-        }
 
-        return mode;
-    }
-//--------------------------------------------------------------------------------------------------
 }

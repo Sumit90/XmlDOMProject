@@ -53,20 +53,9 @@ public interface ComparisonConstants {
     /*Constant to denote that a element is a Node element*/
     public static final String NODE="N";
 
-    /*Constant to denote that a element contains attribute*/
-    public static final String ATTRIBUTE="A";
-
-    /*Constant to denote that a element contains only text*/
-    public static final String TEXT="T";
-
     /*Constant to denote that a element contains attribute and text both*/
-    public static final String ATTRIBUTE_TEXT="AT";
+    public static final String KEY_VALUE="KV";
 
-    public static final String KEY_ATTRIBUTE="KA";
-
-    public static final String KEY_TEXT="KT";
-
-    public static final String VALUE="V";
 
 
 

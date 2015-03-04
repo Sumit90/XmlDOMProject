@@ -1,7 +1,6 @@
 package com.practise.xmlparse.xmldom;
 
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.kxml2.kdom.Element;
 
 /**
  * Created by e00959 on 2/25/2015.
@@ -12,27 +11,27 @@ public class NodeElementPOJO {
     private String keyChildValue;
     private String valueChildName;
     private String valueChildValue;
-    private String parentReferenceAddress;
-    private Node parentReferenceNode;
+    private String elementPath;
+    private Element referenceNode;
     private String elementType;
     private int modeOfComparison;
-    private NodeList nodeList;
-    private String elementName;
+    private boolean isToBeAdded;
+    private Element parentNode;
 
     NodeElementPOJO(String keyChildName, String keyChildValue, String valueChildName, String valueChildValue,
-                    String parentReferenceAddress, Node parentReferenceNode, String elementType,
-                    int modeOfComparison, NodeList nodeList, String elementName)
+                    String parentReferenceAddress, Element referenceNode, String elementType,
+                    int modeOfComparison,boolean isToBeAdded,Element parentNode)
     {
         this.keyChildName=keyChildName;
         this.keyChildValue=keyChildValue;
         this.valueChildName=valueChildName;
         this.valueChildValue=valueChildValue;
-        this.parentReferenceAddress=parentReferenceAddress;
-        this.parentReferenceNode=parentReferenceNode;
+        this.elementPath =parentReferenceAddress;
+        this.referenceNode =referenceNode;
         this.elementType =elementType;
         this.modeOfComparison=modeOfComparison;
-        this.nodeList=nodeList;
-        this.elementName=elementName;
+        this.isToBeAdded=isToBeAdded;
+        this.parentNode=parentNode;
     }
 
     public String getKeyChildName() {
@@ -67,20 +66,20 @@ public class NodeElementPOJO {
         this.valueChildValue = valueChildValue;
     }
 
-    public String getParentReferenceAddress() {
-        return parentReferenceAddress;
+    public String getElementPath() {
+        return elementPath;
     }
 
-    public void setParentReferenceAddress(String parentReferenceAddress) {
-        this.parentReferenceAddress = parentReferenceAddress;
+    public void setElementPath(String elementPath) {
+        this.elementPath = elementPath;
     }
 
-    public Node getParentReferenceNode() {
-        return parentReferenceNode;
+    public Element getReferenceNode() {
+        return referenceNode;
     }
 
-    public void setParentReferenceNode(Node parentReferenceNode) {
-        this.parentReferenceNode = parentReferenceNode;
+    public void setReferenceNode(Element referenceNode) {
+        this.referenceNode = referenceNode;
     }
 
     public String getElementType() {
@@ -99,19 +98,19 @@ public class NodeElementPOJO {
         this.modeOfComparison = modeOfComparison;
     }
 
-    public NodeList getNodeList() {
-        return nodeList;
+    public boolean isToBeAdded() {
+        return isToBeAdded;
     }
 
-    public void setNodeList(NodeList nodeList) {
-        this.nodeList = nodeList;
+    public void setToBeAdded(boolean isToBeAdded) {
+        this.isToBeAdded = isToBeAdded;
     }
 
-    public String getElementName() {
-        return elementName;
+    public Element getParentNode() {
+        return parentNode;
     }
 
-    public void setElementName(String elementName) {
-        this.elementName = elementName;
+    public void setParentNode(Element parentNode) {
+        this.parentNode = parentNode;
     }
 }
