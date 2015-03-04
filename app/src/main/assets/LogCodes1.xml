@@ -49,7 +49,7 @@
    <WCDMA>
       <Wcdma_logcode>
          <name>0x4010</name>
-          <value>1</value>
+          <value>-1</value>
 		 <desc>WCDMA Uplink and Downlink Power Control</desc>
       </Wcdma_logcode>
       <Wcdma_logcode>

@@ -43,16 +43,7 @@ public class WriteXmlFile {
         document= new Document();
 
     }
-
-//--------------------------------------------------------------------------------------------------
-    //This function will create an attribute and will append it to the element passed
-    private void setAttribute(String attributeName, String attributeValue, Element element)
-    {
-        element.setAttribute("",attributeName,attributeValue);
-    }
-
-//--------------------------------------------------------------------------------------------------
-
+    //This function is used for creating Root element
     public boolean createDocRootElement(String rootElementName)
     {
         boolean isSuccessElement=false;
@@ -66,6 +57,7 @@ public class WriteXmlFile {
         return isSuccessElement;
 
     }
+    //This function is used for obtaining Root element
     public Element getDocRootElement()
     {
         if (docRootElement!=null)
@@ -78,7 +70,6 @@ public class WriteXmlFile {
 
     public void WriteXml() throws IOException
     {
-
             if (docRootElement != null) {
                 XmlSerializer xmlWriter = new KXmlSerializer();
                 if (fileParameterPOJO.isWriteXml()) {
