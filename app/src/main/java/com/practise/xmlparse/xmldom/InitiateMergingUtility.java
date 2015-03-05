@@ -795,7 +795,6 @@ public class InitiateMergingUtility {
                                 /*If any of the element was added then write the file*/
                                 if(mIsSuccess)
                                     isWriteSuccess=true;
-
                             }
                             else {
 
@@ -1242,15 +1241,10 @@ public class InitiateMergingUtility {
                                         nodeListElement2.setToBeAdded(false);
                                         nodeElementListFinal.add(nodeListElement2);
                                     }
-
                                 }
                             }
-
                             break;
-
                     }
-
-
                 }
             }
 
