@@ -3,20 +3,20 @@ package com.practise.xmlparse.xmldom;
 import org.kxml2.kdom.Element;
 
 /**
- * Created by e00959 on 2/25/2015.
+ * This class will contain the attributes related to a particular node element
  */
 public class NodeElementPOJO {
 
-    private String keyChildName;
-    private String keyChildValue;
-    private String valueChildName;
-    private String valueChildValue;
-    private String elementPath;
-    private Element referenceNode;
-    private String elementType;
-    private int modeOfComparison;
-    private boolean isToBeAdded;
-    private Element parentNode;
+    private String keyChildName; // This will store the key name
+    private String keyChildValue;// This will store the key value
+    private String valueChildName; // This will store the value name
+    private String valueChildValue; // This will store the value value
+    private String elementPath; //This will store the complete element hierarchy not including root
+    private Element referenceNode; //This will contain the reference node
+    private String elementType; // This will contain the element type
+    private int modeOfComparison; // This will contain the mode of comparison
+    private boolean isToBeAdded;  //This boolean will tell whether the key value element has to be removed
+    private Element parentNode;  // This will store the parent node
 
     NodeElementPOJO(String keyChildName, String keyChildValue, String valueChildName, String valueChildValue,
                     String parentReferenceAddress, Element referenceNode, String elementType,

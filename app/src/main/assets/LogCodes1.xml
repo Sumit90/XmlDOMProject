@@ -61,4 +61,8 @@
    <GSM/>
    <CDMA/>
    <EVDO/>
+    <Myelement>
+        <name>0x4160</name>
+        <value>1</value>
+    </Myelement>
 </fastLogcodes>

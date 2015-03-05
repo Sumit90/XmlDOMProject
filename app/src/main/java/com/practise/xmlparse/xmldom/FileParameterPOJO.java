@@ -4,23 +4,19 @@ import java.io.File;
 import java.io.InputStream;
 
 /**
- * Created by e00959 on 2/4/2015.
+ * This class will hold certain file characteristics related to input files and final file
  */
 public class FileParameterPOJO {
 
-    InputStream inputFile1;
-    InputStream inputFile2;
-    private int filePriority;
-    private String finalFileName;
-    private String finalFilePath;
-    private boolean isWriteXml;
+    private int filePriority; //This will store the file priority
+    private String finalFileName; //This will store the final file name
+    private String finalFilePath; // This will store the final file path
+    private boolean isWriteXml; //This boolean will decide whether final xml file has to be write or not.
 
-    public FileParameterPOJO(InputStream file1, InputStream file2, int filePriority,
-                             String finalFileName, String finalFilePath,boolean isWriteXml)
+    public FileParameterPOJO( int filePriority, String finalFileName, String finalFilePath,
+                              boolean isWriteXml)
 
     {
-        this.inputFile1=file1;
-        this.inputFile2=file2;
         this.filePriority=filePriority;
         this.finalFileName=finalFileName;
         this.finalFilePath=finalFilePath;
@@ -28,13 +24,6 @@ public class FileParameterPOJO {
 
     }
 
-    public InputStream getInputFile1() {
-        return inputFile1;
-    }
-
-    public InputStream getInputFile2() {
-        return inputFile2;
-    }
 
     public int getFilePriority() {
         return filePriority;

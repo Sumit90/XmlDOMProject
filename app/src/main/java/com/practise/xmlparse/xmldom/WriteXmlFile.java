@@ -103,7 +103,7 @@ public class WriteXmlFile {
 
                 } else {
 
-
+                    Log.d(TAG, "-----write xml boolean not true-----");
 
                 }
             }

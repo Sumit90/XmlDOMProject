@@ -1,7 +1,6 @@
 package com.practise.xmlparse.xmldom;
 
 /**
- * Created by e00959 on 2/4/2015.
  *
  * This file consists of an Interface that have constants, that will be used across the source for
  * comparing and merging of the Xml files .
@@ -53,7 +52,7 @@ public interface ComparisonConstants {
     /*Constant to denote that a element is a Node element*/
     public static final String NODE="N";
 
-    /*Constant to denote that a element contains attribute and text both*/
+    /*Constant to denote that a element is for key value search.*/
     public static final String KEY_VALUE="KV";
 
 
