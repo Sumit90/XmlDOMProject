@@ -13,7 +13,7 @@ import android.widget.Button;
 public class MainActivity extends ActionBarActivity {
 
     private Button mParseBtn;
-    private InitiateMergingUtility initiateMergingUtility;
+    private XmlMergingHelper initiateMergingUtility;
 
 
 
@@ -29,8 +29,16 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onClick(View v) {
 
-                initiateMergingUtility=new InitiateMergingUtility(getApplicationContext());
-                initiateMergingUtility.start("LogCodes.xml","/FTA/Log/","LogCodes1.xml");
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        initiateMergingUtility=new XmlMergingHelper(getApplicationContext());
+                        initiateMergingUtility.start("LogCodes.xml","/FTA/Log/","LogCodes1.xml");
+                    }
+                }).start();
+
+
             }
         });
     }

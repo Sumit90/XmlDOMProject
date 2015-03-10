@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Created by e00959 on 3/5/2015.
  */
-public class InitiateMergingUtility {
+public class XmlMergingHelper {
 
     private Context mContext;
     private XmlParser mParseFile1;
@@ -46,18 +46,24 @@ public class InitiateMergingUtility {
     private Element mParentNode=null;
     private Element mParentElement;
 
-    public InitiateMergingUtility(Context context)
+    public XmlMergingHelper(Context context)
     {
         mContext=context;
     }
-    /*This function is the entry point for parsing*/
-    public void start(String file1Name,String file1Path,String file2Name)
+
+
+    /**This function is the entry point for parsing. It will check whether both the files exists or not.
+     * If both the files exists then only it will proceed further executions.
+     *
+     * @param file1Name- Name of file present in sdcard
+     * @param file1Path  Path of file present in sdcard
+     * @param file2Name  Name of file present in assets
+     */
+     public void start(String file1Name,String file1Path,String file2Name)
     {
         try {
 
-
             boolean isFileExists=false;
-
             InputStream inputStreamFile1=null;
             InputStream inputStreamFile2=null;
 
@@ -67,16 +73,20 @@ public class InitiateMergingUtility {
             File sdCard = Environment.getExternalStorageDirectory();
             File file1=new File(sdCard+file1Path,file1Name);
 
-            if(file1.exists())
+            //TODO
+            isFileExists=true;
+           /* if(file1.exists())
             {
                 inputStreamFile1=new FileInputStream(file1);
                 isFileExists=true;
-            }
+            }*/
 
             //If file2 Exists in assets
             try {
-
-                inputStreamFile2=mContext.getResources().getAssets().open(file2Name);
+                inputStreamFile1=mContext.getResources().getAssets().open("LogCodes.xml");
+                inputStreamFile2=mContext.getResources().getAssets().open("LogCodes1.xml");
+                //TODO
+                //inputStreamFile2=mContext.getResources().getAssets().open(file2Name);
             }
             catch(FileNotFoundException ex )
             {
@@ -125,7 +135,7 @@ public class InitiateMergingUtility {
                                     mWriteFile.WriteXml();
                                 } else
                                 {
-                                    Log.d(TAG, "Error while adding nodes writeNodesToXml");
+                                    Log.d(TAG, "Error while adding nodes writeNodesToXml.");
                                 }
                             }
                             else
@@ -146,6 +156,11 @@ public class InitiateMergingUtility {
                 }
             }
         }
+        catch (NullPointerException ex)
+        {
+            Log.d(TAG,"inside  NullPointerException");
+            ex.printStackTrace();
+        }
         catch (FileNotFoundException e)
         {
             Log.d(TAG, "inside FileNotFoundException");
@@ -162,80 +177,106 @@ public class InitiateMergingUtility {
             e.printStackTrace();
         }
     }
-    //--------------------------------------------------------------------------------------------------
-/*The init function is the first function that will called. This function does various tasks like
-* 1) Getting the input stream files from user
- *2) Parse the files
- *3) Initialising FileParameterPOJO
- *4) Adding Initial Root Parameters Name */
-//--------------------------------------------------------------------------------------------------
-    private boolean init(InputStream fileInputStream1,InputStream fileInputStream2)
+
+
+
+    /**The init function is the first function that will called. This function does various tasks like
+     * 1) Getting the input stream files from user
+     *2) Parse the files
+     *3) Initialising FileParameterPOJO
+     *4) Adding Initial Root Parameters Name
+     *5) Use the function addInitialRootParameters to apply rules on root attribute. Pass the attribute
+     * name with symbol @ following the attribute name*
+     *6) Use the function addInitialNodeParameters to apply rules on inner elements
+     *
+     * Permissible Rules that can be applied for Root Attributes are:
+     *  1)PICK_FROM_FILE1
+     *  2)PICK_FROM_FILE2
+     *  3)COMPARE_EQUAL
+     *  4)COMPARE_GREATER_FILE1
+     *  5)COMPARE_GREATER_FILE2
+     *  6)COMPARE_GREATER_EQUAL_FILE1
+     *  7)COMPARE_GREATER_EQUAL_FILE2
+     *  8)NO_COMPARISON
+     *
+     *  Permissible element type that can be applied for Node Type for Inner elements
+     * 1)NODE
+     * 2)KEY_VALUE
+     *
+     * Permissible Rules that can be applied for element type NODE
+     * 1)PICK_FROM_FILE1
+     * 2)PICK_FROM_FILE2
+     * 3)NO_COMPARISON
+     *
+     * Permissible Rules that can be applied for element type KEY_VALUE
+     * 1)PICK_FROM_FILE1
+     * 2)PICK_FROM_FILE2
+     * 3)NO_COMPARISON
+     *
+     * @param inputStreamFile1-Input Stream from Sdcard File
+     * @param inputStreamFile2-Input Stream from Assets File
+     * @return boolean indicating whether initialisation was successful
+     */
+    private boolean init(InputStream inputStreamFile1,InputStream inputStreamFile2)
     {
         boolean isInitSuccess;
 
         try {
 
-            //-------------------------- Clear all the global variables------------------------------
-            mWriteFile=null;
-            mRootElementFile1=null;
-            mRootElementFile2=null;
-            mRootElementFinal=null;
-            mHierarchy=null;
-            mIndex=0;
-            mNodeToBeAdded=null;
-            mIsSuccess =false;
-            mKeyChildName="";
-            mValueChildName="";
-            mElementType="";
-            mModeOfComparison=0;
-            mElementPath="";
-            mNodeListFile1=null;
-            mNodeListFile2=null;
-            mNodeListFinal=null;
-            mParentNode=null;
-            mParentElement=null;
 
-            //-------------------------- Clear all the global variables------------------------------
-
-
-            /**/
-
-            mParseFile1 = new XmlParser(fileInputStream1);
-            mParseFile2 =  new XmlParser(fileInputStream2);
+            mParseFile1 = new XmlParser(inputStreamFile1);
+            mParseFile2 =  new XmlParser(inputStreamFile2);
 
             mNodeListFile1=new ArrayList<NodeElementPOJO>();
             mNodeListFile2=new ArrayList<NodeElementPOJO>();
             mNodeListFinal=new ArrayList<NodeElementPOJO>();
 
-            mFileParameterPOJO =new FileParameterPOJO(ComparisonConstants.PRIORITY_FILE1,
+            mFileParameterPOJO =new FileParameterPOJO(ComparisonConstants.PRIORITY_FILE2,
                     "LogCodesFinal.xml","/sdcard/FTA/Log/",true);
 
             mInitialParameterList =new InitialParameterList();
 
-            addInitialRootParameters("@version",ComparisonConstants.COMPARE_EQUAL);
-            addInitialRootParameters("@name",ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1);
+            addInitialRootParameters("@name",ComparisonConstants.NO_COMPARISON);
+            addInitialRootParameters("@version",ComparisonConstants.NO_COMPARISON);
 
-            addInitialNodeParameters("name", "", "value", "", "LTE/Lte_logcode",
-                    null, ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE1,true);
+            addInitialNodeParameters("name", "value", "A/a",
+                    ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE1);
+
+            addInitialNodeParameters("name", "value", "B/b",
+                    ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE1);
+
+            addInitialNodeParameters("name", "value", "C/c",
+                    ComparisonConstants.NODE, ComparisonConstants.PICK_FROM_FILE1);
+
+            addInitialNodeParameters("name", "value", "D/d",
+                    ComparisonConstants.NODE, ComparisonConstants.PICK_FROM_FILE2);
+
+           addInitialNodeParameters("name", "value", "E/e",
+                    ComparisonConstants.NODE, ComparisonConstants.PICK_FROM_FILE1);
+
+            addInitialNodeParameters("name", "value", "F/f",
+                    ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE1);
+
+             addInitialNodeParameters("name", "value", "G/g",
+                    ComparisonConstants.NODE, ComparisonConstants.PICK_FROM_FILE2);
 
 
-            addInitialNodeParameters("name", "", "value", "", "Myelement",
-                    null, ComparisonConstants.KEY_VALUE, ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2,true);
+           /* addInitialNodeParameters("name", "value", "LTE/Lte_logcode",
+                     ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE2);
 
-           /* addInitialNodeParameters("name", "", "value", "", "LTE/Lte_logcode",
-                    null, ComparisonConstants.KEY_VALUE, ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2,true);
 
-            addInitialNodeParameters("name", "", "value", "", "WCDMA/Wcdma_logcode",
-                    null, ComparisonConstants.KEY_VALUE, ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2,true);
 
-            addInitialNodeParameters("name", "", "value", "", "GSM",
-                    null, ComparisonConstants.NODE, ComparisonConstants.NO_COMPARISON,true);
+            addInitialNodeParameters("name",  "value",  "WCDMA/Wcdma_logcode",
+                    ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE1);
 
-            addInitialNodeParameters("name", "", "value", "", "CDMA",
-                    null, ComparisonConstants.NODE, ComparisonConstants.NO_COMPARISON,true);
+            addInitialNodeParameters("name",  "value",  "GSM",
+                     ComparisonConstants.NODE, ComparisonConstants.NO_COMPARISON);
 
-            addInitialNodeParameters("name", "", "value", "", "EVDO",
-                    null, ComparisonConstants.NODE, ComparisonConstants.NO_COMPARISON,true);*/
+            addInitialNodeParameters("name",  "value",  "CDMA",
+                    ComparisonConstants.NODE, ComparisonConstants.NO_COMPARISON);
+
+            addInitialNodeParameters("name",  "value",  "EVDO",
+                   ComparisonConstants.NODE, ComparisonConstants.NO_COMPARISON);*/
 
 
             printRootList(mInitialParameterList.getInitialRootList());
@@ -279,27 +320,49 @@ public class InitiateMergingUtility {
 
 
 
-    //This function is used to add Initial Root attributes to be used for comparing and extracting
+    //
+
+    /**This function is used to add Initial Root attributes provided by the user to be used for
+     * comparing and extracting
+     *
+     * @param attributeName - Name of the attribute to be compared
+     * @param mode - Type of comparison Mode
+     */
     private void addInitialRootParameters(String attributeName,int mode)
     {
         mInitialParameterList.addInitialRoot(new RootElementPOJO(attributeName, mode));
     }
 
     //This function is used to add Initial Node attributes to be used for comparing and extracting
-    private void addInitialNodeParameters(String keyChildName,String keyChildValue,String valueChildName,
-                                          String valueChildValue, String elementPath,
-                                          Element parentReferenceNode,String nodeType, int modeOfComparison,
-                                          boolean isToBeAdded
+    private void addInitialNodeParameters(String keyChildName,String valueChildName,
+                                           String elementPath,
+                                          String nodeType, int modeOfComparison
+
     )
     {
+
+        boolean isTobeAdded = true;
+        String keyChildValue="";
+        String valueChildValue="";
+        Element parentReferenceNode=null;
         mInitialParameterList.addInitialNodeAttribute(new NodeElementPOJO(keyChildName, keyChildValue,
                 valueChildName, valueChildValue, elementPath, parentReferenceNode, nodeType,
-                modeOfComparison,isToBeAdded,null));
+                modeOfComparison,isTobeAdded,null));
 
     }
 
 
-    //This function will compare the root parameters attributes and add it to final  root element.
+    //
+
+    /**
+     * This function will compare the root parameters attributes from both the Xml files and then
+     * add it to final root element depending upon the type of comparison.
+     *
+     * @param rootElementFinal - Final Xml File Root Element
+     * @param mRootElementFile1 - File 1 Root Element
+     * @param mRootElementFile2 -File 2 Root Element
+     * @return boolean indicating whether merging and comparison was success
+     */
     private boolean compareAndMergeRootParameters(Element rootElementFinal,Element mRootElementFile1,
                                                   Element mRootElementFile2)
     {
@@ -309,7 +372,7 @@ public class InitiateMergingUtility {
          exist return false*/
         if(rootElementFinal==null ||( mRootElementFile1==null && mRootElementFile2==null))
         {
-            return isSuccess;
+            return false;
         }
 
         //This list will contain the initial root parameters set by the user
@@ -323,13 +386,13 @@ public class InitiateMergingUtility {
 
         int modeComparison;
 
-        /* If no attribute exists in the initial root attribute list return true since user doesnot
+        /* If no attribute exists in the initial root attribute list return true since user does not
         want to add any of the attributes.
          */
         if(initialRootList==null || initialRootList.size()==0)
         {
             Log.d(TAG,"----[compareAndMergeRootParameters]:initialRootList.size()==0------");
-            return isSuccess=true;
+            return true;
         }
 
         /*Loop till the last element in the initial root attribute list*/
@@ -337,7 +400,7 @@ public class InitiateMergingUtility {
         {
             isSuccess=false;
             initialRootElement=initialRootList.get(counter);
-            attributeName=initialRootElement.getElementName();
+            attributeName=initialRootElement.getElementName().trim();
 
             //attribute names contain @. Replace it with blank before comparing.
             if(attributeName!=null && !attributeName.equals("")) {
@@ -486,7 +549,7 @@ public class InitiateMergingUtility {
                         }
                         else
                         {
-                            Log.d(TAG,"----COMPARE_GREATER_FILE2 break------"+attributeName);
+                            Log.d(TAG,"----COMPARE_GREATER_EQUAL_FILE2 break------"+attributeName);
                             isSuccess = false;
                             break OUTER_LOOP;
                         }
@@ -499,7 +562,7 @@ public class InitiateMergingUtility {
                     case ComparisonConstants.PICK_FROM_FILE1:
 
 
-                        if (attributeValue1!=null || !attributeValue1.equals("")) {
+                        if (attributeValue1!=null && !attributeValue1.equals("")) {
 
                             setAttribute(attributeName, attributeValue1, rootElementFinal);
                             isSuccess = true;
@@ -517,7 +580,7 @@ public class InitiateMergingUtility {
                     * loop*/
                     case ComparisonConstants.PICK_FROM_FILE2:
 
-                        if (attributeValue2!=null || !attributeValue2.equals("")) {
+                        if (attributeValue2!=null && !attributeValue2.equals("")) {
 
                             setAttribute(attributeName, attributeValue2, rootElementFinal);
                             isSuccess = true;
@@ -536,8 +599,8 @@ public class InitiateMergingUtility {
 
                     case ComparisonConstants.NO_COMPARISON:
 
-                        if((attributeValue1!=null || !attributeValue1.equals(""))&&
-                                (attributeValue2!=null || !attributeValue2.equals("")))
+                        if((attributeValue1!=null && !attributeValue1.equals(""))&&
+                                (attributeValue2!=null && !attributeValue2.equals("")))
                         {
                             if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
                             {
@@ -551,22 +614,28 @@ public class InitiateMergingUtility {
                                 isSuccess = true;
                             }
                         }
-                        else if((attributeValue1!=null || !attributeValue1.equals("")))
+                        else if((attributeValue1!=null && !attributeValue1.equals("")))
                         {
                             setAttribute(attributeName, attributeValue1, rootElementFinal);
                             isSuccess = true;
                         }
-                        else if((attributeValue2!=null || !attributeValue2.equals("")))
+                        else if((attributeValue2!=null && !attributeValue2.equals("")))
                         {
                             setAttribute(attributeName, attributeValue2, rootElementFinal);
                             isSuccess = true;
                         }
                         else
                         {
+                            Log.d(TAG,"----NO_COMPARISON break both attributes null------"+attributeName);
                             isSuccess = false;
                         }
 
                         break;
+
+                    default:
+                        Log.d(TAG,"----Wrong Comparison mode for Root Attribute------"+attributeName);
+                        isSuccess = false;
+                        break OUTER_LOOP;
                 }
             }
             else
@@ -581,18 +650,33 @@ public class InitiateMergingUtility {
 
     }
 
-    //This function will create an attribute and will append it to the element passed
+
+
+    /**This function will create an attribute and will append it to the element passed
+     *
+     * @param attributeName - Name of the attribute to be add
+     * @param attributeValue-Value of the attribute to be add
+     * @param element -Element on which attribute has to be set
+     */
     private void setAttribute(String attributeName, String attributeValue, Element element)
     {
         element.setAttribute("",attributeName,attributeValue);
     }
 
 
-    /*This function will write the Nodes of both xml in final xml file on the basis of the rules specified
-    * by the user. It will call other functions to get the required nodes from both the xml files,
-    * compare the attributes to create a final list of nodes and then adding the nodes to the final xml
-    * file. */
-    private boolean writeNodesToXml(Element rootElementFile1,Element rootElementFile2,Element rootElementFinal)
+    /**/
+
+    /**This function will write the Nodes of both xml in final xml file on the basis of the rules specified
+     * by the user. It will call other functions to get the required nodes from both the xml files,
+     * compare the attributes to create a final list of nodes and then adding the nodes to the final xml
+     * file.
+     *
+     * @param rootElementFile1 - Root element from File1
+     * @param rootElementFile2 - Root element from File2
+     * @param rootElementFinal - Root element for final File
+     * @return boolean variable indicating whether comparing and merging was successful or not
+     */
+     private boolean writeNodesToXml(Element rootElementFile1,Element rootElementFile2,Element rootElementFinal)
     {
         boolean isWriteSuccess=false;
 
@@ -603,7 +687,7 @@ public class InitiateMergingUtility {
         * the final xml file.*/
         if(initialNodes==null || initialNodes.size()==0)
         {
-            return isWriteSuccess;
+            return false;
         }
 
         NodeElementPOJO nodeElementPOJO=null;
@@ -677,9 +761,21 @@ public class InitiateMergingUtility {
                             }
                             else
                             {
-                                isWriteSuccess=false;
-                                Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE1]: break loop---------");
-                                break OUTER_LOOP;
+                                Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE1]Not found in file1---------");
+                                searchAndMergeNodeElements(rootElementFile2, rootElementFinal);
+
+                                if(mIsSuccess){
+                                    Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE1] found in file2---------");
+                                    isWriteSuccess=true;
+                                }
+                                else
+                                {
+                                    isWriteSuccess=false;
+                                    Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE2]: Not found in file 1 and then 2");
+                                    //break OUTER_LOOP;
+                                }
+
+
                             }
 
                         }
@@ -694,9 +790,22 @@ public class InitiateMergingUtility {
                             }
                             else
                             {
-                                isWriteSuccess=false;
-                                Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE2]: break loop---------");
-                                break OUTER_LOOP;
+                                Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE2]Not found in file2---------");
+
+                                searchAndMergeNodeElements(rootElementFile1, rootElementFinal);
+
+                                if(mIsSuccess){
+                                    Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE2] found in file1---------");
+                                    isWriteSuccess=true;
+                                }
+                                else
+                                {
+                                    isWriteSuccess=false;
+                                    Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE2]: Not found in file 1 and then 2");
+                                   // break OUTER_LOOP;
+                                }
+
+
                             }
 
                         }
@@ -717,7 +826,7 @@ public class InitiateMergingUtility {
                         {
                             isWriteSuccess=false;
                             Log.d(TAG,"writeNodesToXml:[NODE][PICK_FROM_FILE1]: break loop---------");
-                            break OUTER_LOOP;
+                            //break OUTER_LOOP;
                         }
                     }
                     /*If the mode of comparison or rule specified is pick from file 2 check for the
@@ -734,7 +843,7 @@ public class InitiateMergingUtility {
                         {
                             isWriteSuccess=false;
                             Log.d(TAG,"writeNodesToXml:[NODE][PICK_FROM_FILE2]: break loop---------");
-                            break OUTER_LOOP;
+                           // break OUTER_LOOP;
                         }
 
                     }else{
@@ -760,6 +869,7 @@ public class InitiateMergingUtility {
                     searchAndAddKeyValueNode(mNodeListFile1, mRootElementFile1);
 
                     //If element exists in root element 1, search elements in root element 2.
+
                     if(mIsSuccess && mNodeListFile1!=null && mNodeListFile1.size()>0)
                     {
                         mIsSuccess =false;
@@ -771,6 +881,7 @@ public class InitiateMergingUtility {
 
                         /* If element exists in both the files then compare and merge the list to get
                             a final list*/
+
 
                         if(mIsSuccess && mNodeListFile2!=null && mNodeListFile2.size()>0)
                         {
@@ -799,7 +910,7 @@ public class InitiateMergingUtility {
                             else {
 
                                 isWriteSuccess=false;
-                                Log.d(TAG, "writeNodesToXml:[NODE]:mIsSuccess && mNodeListFile1!=null && mNodeListFile1.size()>0-----");
+                                Log.d(TAG, "writeNodesToXml:[NODE]:mIsSuccess && mNodeListFinal!=null && mNodeListFinal.size()>0-----");
                                 break OUTER_LOOP;
                             }
                         }
@@ -836,9 +947,15 @@ public class InitiateMergingUtility {
 
     }
 
-    /*This function will take the final node element list and final root element. It will iterate over the
-    * List and will add the elements to the final root element.*/
-    private void addNodeElementsToFinalFile(List<NodeElementPOJO> nodeElementPOJOList,Element rootElementFinal)
+    /**/
+
+    /**
+     * This function will take the final node element list and final root element. It will iterate over the
+     * List and will add the elements to the final root element.
+      * @param nodeElementPOJOList - Final List of node elements
+     * @param rootElementFinal - Final root Element
+     */
+     private void addNodeElementsToFinalFile(List<NodeElementPOJO> nodeElementPOJOList,Element rootElementFinal)
     {
         String elementName=nodeElementPOJOList.get(0).getElementPath();
         NodeElementPOJO nodeElement=null;
@@ -1092,7 +1209,7 @@ public class InitiateMergingUtility {
         }
 
         /*Iterate over both of the lists*/
-        for(int l_i=0;l_i<nodeElementList1.size();l_i++)
+        OUTER_LOOP:for(int l_i=0;l_i<nodeElementList1.size();l_i++)
         {
             nodeListElement1=nodeElementList1.get(l_i);
 
@@ -1104,16 +1221,53 @@ public class InitiateMergingUtility {
                 * name are same then we have found the element in same hierarchy having same key name
                 * and value. Apply rules on the basis of mode.*/
                 if(((nodeListElement1.getElementPath()).equals(nodeListElement2.getElementPath()))
-                        &&((nodeListElement1.getKeyChildName()).equals(nodeListElement2.getKeyChildName()))
-                        &&((nodeListElement1.getKeyChildValue()).equals(nodeListElement2.getKeyChildValue()))
+                        &&((nodeListElement1.getKeyChildName()).equalsIgnoreCase(nodeListElement2.getKeyChildName()))
+                        &&((nodeListElement1.getKeyChildValue()).equalsIgnoreCase(nodeListElement2.getKeyChildValue()))
                         &&((nodeListElement1.getModeOfComparison())==(nodeListElement2.getModeOfComparison()))
-                        &&((nodeListElement1.getValueChildName()).equals(nodeListElement2.getValueChildName()))
+                        &&((nodeListElement1.getValueChildName()).equalsIgnoreCase(nodeListElement2.getValueChildName()))
                         )
                 {
 
                     mode=nodeListElement1.getModeOfComparison();
 
-                    switch (mode)
+                    if(nodeListElement1.getValueChildValue().equals(nodeListElement2.getValueChildValue()))
+                    {
+                        if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
+                            nodeElementListFinal.add(nodeListElement1);
+
+                        } else {
+                            nodeElementListFinal.add(nodeListElement2);
+                        }
+                        mIsSuccess = true;
+                    }
+                    else
+                    {
+                        switch (mode)
+                        {
+                            case ComparisonConstants.PICK_FROM_FILE1:
+
+                                nodeElementListFinal.add(nodeListElement1);
+                                mIsSuccess=true;
+                                break;
+
+                            case ComparisonConstants.PICK_FROM_FILE2:
+
+                                nodeElementListFinal.add(nodeListElement2);
+                                mIsSuccess=true;
+                                break;
+
+                            default:
+
+                                mIsSuccess=false;
+                                Log.d(TAG,"[compareAndMergeKeyNode]:default case.");
+                                break OUTER_LOOP;
+
+
+                        }
+                    }
+
+
+                    /*switch (mode)
                     {
                         case ComparisonConstants.NO_COMPARISON:
 
@@ -1179,8 +1333,6 @@ public class InitiateMergingUtility {
                                 nodeListElement1.setToBeAdded(false);
                                 nodeElementListFinal.add(nodeListElement1);
                             }
-
-
                             break;
 
                         case ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2:
@@ -1219,8 +1371,8 @@ public class InitiateMergingUtility {
 
                         case ComparisonConstants.COMPARE_EQUAL:
 
-                            if((nodeListElement1.getKeyChildName().equals(nodeListElement2.getKeyChildName()))
-                                    &&(nodeListElement1.getKeyChildValue().equals(nodeListElement2.getKeyChildValue())))
+                            if((nodeListElement1.getKeyChildName().equalsIgnoreCase(nodeListElement2.getKeyChildName()))
+                                    &&(nodeListElement1.getKeyChildValue().equalsIgnoreCase(nodeListElement2.getKeyChildValue())))
                             {
                                 if (compareAttributeValues(nodeListElement1.getValueChildValue(), nodeListElement2.getValueChildValue(),
                                         ComparisonConstants.COMPARE_EQUAL)) {
@@ -1243,8 +1395,9 @@ public class InitiateMergingUtility {
                                     }
                                 }
                             }
+
                             break;
-                    }
+                    }*/
                 }
             }
 
@@ -1275,7 +1428,7 @@ public class InitiateMergingUtility {
             /*Compare attribute Values for value greater in File1 */
             case ComparisonConstants.COMPARE_GREATER_FILE1:
 
-                if(((attrValue1.trim()).compareTo(attrValue2))>0)
+                if(((attrValue1.trim()).compareTo(attrValue2.trim()))>0)
                 {
                     result=true;
                 }
@@ -1285,7 +1438,7 @@ public class InitiateMergingUtility {
             /*Compare attribute Values for value greater in File2 */
             case ComparisonConstants.COMPARE_GREATER_FILE2:
 
-                if(((attrValue2.trim()).compareTo(attrValue1))>0)
+                if(((attrValue2.trim()).compareTo(attrValue1.trim()))>0)
                 {
                     result=true;
                 }
@@ -1295,7 +1448,7 @@ public class InitiateMergingUtility {
             /*Compare attribute Values for value greater or equal in File1 */
             case ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1:
 
-                if(((attrValue1.trim()).compareTo(attrValue2))>=0)
+                if(((attrValue1.trim()).compareTo(attrValue2.trim()))>=0)
                 {
                     result=true;
                 }
@@ -1305,7 +1458,7 @@ public class InitiateMergingUtility {
             /*Compare attribute Values for value greater or equal in File2 */
             case ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2:
 
-                if(((attrValue2.trim()).compareTo(attrValue1))>=0)
+                if(((attrValue2.trim()).compareTo(attrValue1.trim()))>=0)
                 {
                     result=true;
                 }

@@ -68,9 +68,10 @@ public class WriteXmlFile {
         return null;
     }
 
+  //This function is used for writing the final Xml file.
     public void WriteXml() throws IOException
     {
-            if (docRootElement != null) {
+            if (docRootElement != null ) {
                 XmlSerializer xmlWriter = new KXmlSerializer();
                 if (fileParameterPOJO.isWriteXml()) {
 
