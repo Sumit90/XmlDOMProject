@@ -5,10 +5,15 @@
         <value>0</value>
         <desc>LTE ML1 PDSCH stat indication</desc>
     </a>
+    <a>
+        <name>0xB174</name>
+        <value>0</value>
+        <desc>LTE ML1 PDSCH stat indication</desc>
+    </a>
 </A>
 <B>
     <b>
-        <name>0x4010</name>
+        <name>0x4011</name>
         <value>0</value>
         <desc>WCDMA Uplink and Downlink Power Control</desc>
     </b>
