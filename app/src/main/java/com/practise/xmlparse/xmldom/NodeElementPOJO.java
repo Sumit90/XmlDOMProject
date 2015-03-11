@@ -17,10 +17,11 @@ public class NodeElementPOJO {
     private int modeOfComparison; // This will contain the mode of comparison
     private boolean isToBeAdded;  //This boolean will tell whether the key value element has to be removed
     private Element parentNode;  // This will store the parent node
+    private Element nodeItself;  // This will store the parent node
 
     NodeElementPOJO(String keyChildName, String keyChildValue, String valueChildName, String valueChildValue,
                     String parentReferenceAddress, Element referenceNode, String elementType,
-                    int modeOfComparison,boolean isToBeAdded,Element parentNode)
+                    int modeOfComparison,boolean isToBeAdded,Element parentNode,Element nodeItself)
     {
         this.keyChildName=keyChildName;
         this.keyChildValue=keyChildValue;
@@ -32,6 +33,7 @@ public class NodeElementPOJO {
         this.modeOfComparison=modeOfComparison;
         this.isToBeAdded=isToBeAdded;
         this.parentNode=parentNode;
+        this.nodeItself=nodeItself;
     }
 
     public String getKeyChildName() {
@@ -112,5 +114,13 @@ public class NodeElementPOJO {
 
     public void setParentNode(Element parentNode) {
         this.parentNode = parentNode;
+    }
+
+    public Element getNodeItself() {
+        return nodeItself;
+    }
+
+    public void setNodeItself(Element nodeItself) {
+        this.nodeItself = nodeItself;
     }
 }

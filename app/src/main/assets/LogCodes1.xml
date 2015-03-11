@@ -1,39 +1,23 @@
-<?xml version="1.0" encoding="UTF-8"?><fastLogcodes version="1.36.2" name="myexample">
-    <A>
+<?xml version="1.0" encoding="UTF-8"?><fastLogcodes version="1.37.1" name="myexample">
+
+
+        <a>
+            <name>0xB175</name>
+            <value>1</value>
+            <desc>LTE ML1 PDSCH stat indication</desc>
+        </a>
+
         <a>
             <name>0xB173</name>
             <value>1</value>
             <desc>LTE ML1 PDSCH stat indication</desc>
         </a>
 
-    </A>
-    <B>
-        <b>
-            <name>0x4010</name>
-            <value>0</value>
-            <desc>WCDMA Uplink and Downlink Power Control</desc>
-        </b>
+        <a>
+            <name>0xB179</name>
+            <value>1</value>
+            <desc>LTE ML1 PDSCH stat indication</desc>
+        </a>
 
-    </B>
-    <D>
-        <d>
-            <name>0x4010</name>
-            <value>1</value>
-            <desc>WCDMA Uplink and Downlink Power Control</desc>
-        </d>
-    </D>
-    <F>
-        <f>
-            <name>0x4010</name>
-            <value>0</value>
-            <desc>WCDMA Uplink and Downlink Power Control</desc>
-        </f>
-    </F>
-    <G>
-        <g>
-            <name>0x4010</name>
-            <value>1</value>
-            <desc>WCDMA Uplink and Downlink Power Control</desc>
-        </g>
-    </G>
+
 </fastLogcodes>

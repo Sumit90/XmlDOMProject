@@ -45,6 +45,7 @@ public class XmlMergingHelper {
     private List<NodeElementPOJO> mNodeListFinal;
     private Element mParentNode=null;
     private Element mParentElement;
+    private List<NodeElementPOJO> mListItemsAdded;
 
     public XmlMergingHelper(Context context)
     {
@@ -230,6 +231,7 @@ public class XmlMergingHelper {
             mNodeListFile1=new ArrayList<NodeElementPOJO>();
             mNodeListFile2=new ArrayList<NodeElementPOJO>();
             mNodeListFinal=new ArrayList<NodeElementPOJO>();
+            mListItemsAdded=new ArrayList<NodeElementPOJO>();
 
             mFileParameterPOJO =new FileParameterPOJO(ComparisonConstants.PRIORITY_FILE2,
                     "LogCodesFinal.xml","/sdcard/FTA/Log/",true);
@@ -240,9 +242,9 @@ public class XmlMergingHelper {
             addInitialRootParameters("@version",ComparisonConstants.NO_COMPARISON);
 
             addInitialNodeParameters("name", "value", "A/a",
-                    ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE1);
+                    ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE2);
 
-            addInitialNodeParameters("name", "value", "B/b",
+           /* addInitialNodeParameters("name", "value", "B/b",
                     ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE1);
 
             addInitialNodeParameters("name", "value", "C/c",
@@ -258,7 +260,7 @@ public class XmlMergingHelper {
                     ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE1);
 
              addInitialNodeParameters("name", "value", "G/g",
-                    ComparisonConstants.NODE, ComparisonConstants.PICK_FROM_FILE2);
+                    ComparisonConstants.NODE, ComparisonConstants.PICK_FROM_FILE2);*/
 
 
            /* addInitialNodeParameters("name", "value", "LTE/Lte_logcode",
@@ -341,13 +343,13 @@ public class XmlMergingHelper {
     )
     {
 
-        boolean isTobeAdded = true;
+        boolean isTobeAdded = false;
         String keyChildValue="";
         String valueChildValue="";
         Element parentReferenceNode=null;
         mInitialParameterList.addInitialNodeAttribute(new NodeElementPOJO(keyChildName, keyChildValue,
                 valueChildName, valueChildValue, elementPath, parentReferenceNode, nodeType,
-                modeOfComparison,isTobeAdded,null));
+                modeOfComparison,isTobeAdded,null,null));
 
     }
 
@@ -1013,28 +1015,41 @@ public class XmlMergingHelper {
                 }
                 if(mIndex==mHierarchy.length-1)
                 {
-                    for(int j=0;j<nodeElementPOJOList.size();j++)
-                    {
-                        NodeElementPOJO nodeElementPOJO=nodeElementPOJOList.get(j);
+                    NodeElementPOJO nodeElementPOJO=null;
+                    boolean isElementFound=false;
 
-                        if((childElement.getElement("",nodeElementPOJO.getKeyChildName())!=null)&&
-                                (childElement.getElement("",nodeElementPOJO.getValueChildName())!=null))
-                        {
-                            String keyValue=childElement.getElement("",nodeElementPOJO.getKeyChildName()).getText(0);
-                            String valueValue=childElement.getElement("",nodeElementPOJO.getValueChildName()).getText(0);
+                    INNER_LOOP:for(int j=0;j<nodeElementPOJOList.size();j++) {
 
-                            if((keyValue!=null && keyValue.length()>0) && (valueValue!=null && valueValue.length()>0))
-                            {
-                                if(keyValue.equals(nodeElementPOJO.getKeyChildValue())) {
+                         nodeElementPOJO = nodeElementPOJOList.get(j);
 
-                                    if (!nodeElementPOJO.isToBeAdded()) {
-                                        parentNodeElement.removeChild(i);
+                        if (nodeElementPOJO.isToBeAdded()) {
+                            if ((childElement.getElement("", nodeElementPOJO.getKeyChildName()) != null) &&
+                                    (childElement.getElement("", nodeElementPOJO.getValueChildName()) != null)) {
+
+                                String keyValue = childElement.getElement("", nodeElementPOJO.getKeyChildName()).getText(0);
+                                String valueValue = childElement.getElement("", nodeElementPOJO.getValueChildName()).getText(0);
+
+                                if ((keyValue != null && keyValue.length() > 0) && (valueValue != null && valueValue.length() > 0)) {
+                                    if (keyValue.equals(nodeElementPOJO.getKeyChildValue())) {
+
+                                        nodeElementPOJO.setToBeAdded(false);
+                                        isElementFound=true;
+                                        break INNER_LOOP;
+                                    } else {
+
+                                        //nodeElementPOJO.setToBeAdded(false);
+                                        //parentNodeElement.addChild(Node.ELEMENT,nodeElementPOJO.getNodeItself());
                                     }
-                                    mIsSuccess=true;
+
+                                    mIsSuccess = true;
                                 }
+
                             }
                         }
                     }
+                    if(isElementFound)
+                    nodeElementPOJOList.remove(nodeElementPOJO);
+
                 }
                 else
                 {
@@ -1042,7 +1057,9 @@ public class XmlMergingHelper {
                     getFinalKeyValueElement(nodeElementPOJOList, childElement);
                 }
             }
+
         }
+
     }
     /*This function is used for searching a particular node element hierarchy in root element. If one of
     * such hierarchy exists then set variable mIsSuccess to true that will be used by the calling function
@@ -1112,7 +1129,8 @@ public class XmlMergingHelper {
                 {
                     /*Get the key and values from the element. If found then get the values of both.
                     * */
-                    if((childElement.getElement("",mKeyChildName)!=null)&&
+
+                     if((childElement.getElement("",mKeyChildName)!=null)&&
                             (childElement.getElement("",mValueChildName)!=null))
                     {
                         String keyValue=childElement.getElement("",mKeyChildName).getText(0);
@@ -1124,7 +1142,7 @@ public class XmlMergingHelper {
                         {
                             mIsSuccess =true;
                             nodeElementList.add(new NodeElementPOJO(mKeyChildName,keyValue,mValueChildName,valueValue,
-                                    mElementPath,childElement,mElementType,mModeOfComparison,true,null));
+                                    mElementPath,childElement,mElementType,mModeOfComparison,true,null,childElement));
                         }
                     }
                 }
@@ -1167,7 +1185,7 @@ public class XmlMergingHelper {
                             {
                                 mIsSuccess =true;
                                 nodeElementList.add(new NodeElementPOJO(mKeyChildName,keyValue,mValueChildName,valueValue,
-                                        mElementPath,mNodeToBeAdded,mElementType,mModeOfComparison,true,mParentNode));
+                                        mElementPath,mNodeToBeAdded,mElementType,mModeOfComparison,true,mParentNode,childElement));
                             }
                         }
 
@@ -1197,8 +1215,11 @@ public class XmlMergingHelper {
     {
         mIsSuccess=false;
 
-        NodeElementPOJO nodeListElement1=null;
-        NodeElementPOJO nodeListElement2=null;
+       /* NodeElementPOJO nodeListElement1=null;
+        NodeElementPOJO nodeListElement2=null;*/
+
+        List<NodeElementPOJO> auxillaryList1 = new ArrayList<NodeElementPOJO>();
+        NodeElementPOJO auxInnerNode = null;
         int mode=0;
 
         /*If the both the list files are empty return the function*/
@@ -1209,13 +1230,12 @@ public class XmlMergingHelper {
         }
 
         /*Iterate over both of the lists*/
-        OUTER_LOOP:for(int l_i=0;l_i<nodeElementList1.size();l_i++)
+        OUTER_LOOP:for(NodeElementPOJO nodeListElement1 : nodeElementList1)
         {
-            nodeListElement1=nodeElementList1.get(l_i);
 
-            for(int l_j=0;l_j<nodeElementList2.size();l_j++)
+            boolean elementFound = false;
+            INNER_LOOP:for (NodeElementPOJO nodeListElement2 : nodeElementList2)
             {
-                nodeListElement2=nodeElementList2.get(l_j);
 
                 /*If the element path,key child name, key child value,mode of comparison,value child
                 * name are same then we have found the element in same hierarchy having same key name
@@ -1233,9 +1253,11 @@ public class XmlMergingHelper {
                     if(nodeListElement1.getValueChildValue().equals(nodeListElement2.getValueChildValue()))
                     {
                         if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
+
                             nodeElementListFinal.add(nodeListElement1);
 
                         } else {
+
                             nodeElementListFinal.add(nodeListElement2);
                         }
                         mIsSuccess = true;
@@ -1265,6 +1287,28 @@ public class XmlMergingHelper {
 
                         }
                     }
+
+                    elementFound = true;
+                    auxInnerNode = nodeListElement2;
+                    break INNER_LOOP;
+                }
+
+            } //Endof INNER_LOOP
+
+            if(elementFound) {
+                auxillaryList1.add(nodeListElement1);
+                nodeElementList2.remove(auxInnerNode);
+            }
+
+
+
+
+        }//Endof OUTER_LOOP
+
+        nodeElementList1.removeAll(auxillaryList1);
+        nodeElementListFinal.addAll(nodeElementList1);
+        nodeElementListFinal.addAll(nodeElementList2);
+
 
 
                     /*switch (mode)
@@ -1398,10 +1442,8 @@ public class XmlMergingHelper {
 
                             break;
                     }*/
-                }
-            }
 
-        }
+
 
         return mIsSuccess;
 
