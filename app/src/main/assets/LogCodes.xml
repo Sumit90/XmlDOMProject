@@ -1,24 +1,43 @@
-<?xml version="1.0" encoding="UTF-8"?><fastLogcodes version="1.37.1" name="myexample">
+<?xml version="1.0" encoding="UTF-8"?><fastLogcodes version="1.36.2" name="myexample">
+   <LTE>
+      <Lte_logcode>
+         <name>0xB173</name>
+         <value>0</value>
+		 <desc>LTE ML1 PDSCH stat indication</desc>
+      </Lte_logcode>
+      <Lte_logcode>
+         <name>0xB16C</name>
+         <value>0</value>
+		 <desc>LTE ML1 DCI information report</desc>
+      </Lte_logcode>
 
-    <a>
-        <name>0xB173</name>
-        <value>0</value>
-        <desc>LTE ML1 PDSCH stat indication</desc>
-    </a>
-
-    <a>
-    <name>0xB175</name>
-    <value>0</value>
-    <desc>LTE ML1 PDSCH stat indication</desc>
-</a>
-
-    <a>
-        <name>0xB178</name>
-        <value>0</value>
-        <desc>LTE ML1 PDSCH stat indication</desc>
-    </a>
+       <Lte_logcode1>
+           <name>0xB173</name>
+           <value>0</value>
+           <desc>LTE ML1 PDSCH stat indication</desc>
+       </Lte_logcode1>
+       <Lte_logcode1>
+           <name>0xB16C</name>
+           <value>0</value>
+           <desc>LTE ML1 DCI information report</desc>
+       </Lte_logcode1>
 
 
-
-
+   </LTE>
+   <WCDMA>
+      <Wcdma_logcode>
+         <name>0x4010</name>
+         <value>0</value>
+		 <desc>WCDMA Uplink and Downlink Power Control</desc>
+      </Wcdma_logcode>
+      <Wcdma_logcode>
+         <name>0x4160</name>
+         <value>0</value>
+		 <desc>WCDMA RACH Parameters</desc>
+      </Wcdma_logcode>
+   </WCDMA>
+   <GSM/>
+   <CDMA/>
+   <EVDO/>
+   
 </fastLogcodes>

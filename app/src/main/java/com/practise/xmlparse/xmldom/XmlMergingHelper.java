@@ -37,7 +37,6 @@ public class XmlMergingHelper {
     private boolean mIsSuccess =false;
     private String mKeyChildName="";
     private String mValueChildName="";
-    private String mElementType="";
     private int mModeOfComparison=0;
     private String mElementPath="";
     private List<NodeElementPOJO> mNodeListFile1;
@@ -46,6 +45,8 @@ public class XmlMergingHelper {
     private Element mParentNode=null;
     private Element mParentElement;
     private List<NodeElementPOJO> mListItemsAdded;
+    private int mParentIndex=0;
+    Element mainParent=null;
 
     public XmlMergingHelper(Context context)
     {
@@ -122,10 +123,17 @@ public class XmlMergingHelper {
 
                         //If the Root element was created successfully for the final file
 
-                        if(mWriteFile.createDocRootElement(mRootElementFile1.getName()))
+                        if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
                         {
-                            mRootElementFinal = mWriteFile.getDocRootElement();
+                            mRootElementFinal=mRootElementFile1;
+                        }
+                        else
+                        {
+                            mRootElementFinal=mRootElementFile2;
+                        }
 
+                        if(mWriteFile.addRootElementToDocument(mRootElementFinal))
+                        {
                             if(compareAndMergeRootParameters(mRootElementFinal
                                     ,mRootElementFile1,mRootElementFile2))
                             {
@@ -134,10 +142,13 @@ public class XmlMergingHelper {
                                 if (writeNodesToXml(mRootElementFile1, mRootElementFile2, mRootElementFinal))
                                 {
                                     mWriteFile.WriteXml();
-                                } else
+                                }
+                                else
                                 {
                                     Log.d(TAG, "Error while adding nodes writeNodesToXml.");
                                 }
+
+
                             }
                             else
                             {
@@ -148,6 +159,7 @@ public class XmlMergingHelper {
                         {
                             Log.d(TAG, "-------Cannot create the root element-----------------");
                         }
+
                     }
                     else
                     {
@@ -233,42 +245,22 @@ public class XmlMergingHelper {
             mNodeListFinal=new ArrayList<NodeElementPOJO>();
             mListItemsAdded=new ArrayList<NodeElementPOJO>();
 
-            mFileParameterPOJO =new FileParameterPOJO(ComparisonConstants.PRIORITY_FILE2,
-                    "LogCodesFinal.xml","/sdcard/FTA/Log/",true);
+            mFileParameterPOJO =new FileParameterPOJO(ComparisonConstants.PRIORITY_FILE1,
+                    "LogCodesFinal.xml","/sdcard/FTA/Log/");
 
             mInitialParameterList =new InitialParameterList();
 
+            addInitialRootParameters("@version",ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2);
             addInitialRootParameters("@name",ComparisonConstants.NO_COMPARISON);
-            addInitialRootParameters("@version",ComparisonConstants.NO_COMPARISON);
 
-            addInitialNodeParameters("name", "value", "A/a",
-                    ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE2);
+            addInitialNodeParameters("name", "value", "LTE/Lte_logcode",ComparisonConstants.PICK_FROM_FILE1);
+            addInitialNodeParameters("name", "value", "WCDMA/Wcdma_logcode",ComparisonConstants.PICK_FROM_FILE2);
 
-           /* addInitialNodeParameters("name", "value", "B/b",
-                    ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE1);
-
-            addInitialNodeParameters("name", "value", "C/c",
-                    ComparisonConstants.NODE, ComparisonConstants.PICK_FROM_FILE1);
-
-            addInitialNodeParameters("name", "value", "D/d",
-                    ComparisonConstants.NODE, ComparisonConstants.PICK_FROM_FILE2);
-
-           addInitialNodeParameters("name", "value", "E/e",
-                    ComparisonConstants.NODE, ComparisonConstants.PICK_FROM_FILE1);
-
-            addInitialNodeParameters("name", "value", "F/f",
-                    ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE1);
-
-             addInitialNodeParameters("name", "value", "G/g",
-                    ComparisonConstants.NODE, ComparisonConstants.PICK_FROM_FILE2);*/
-
-
-           /* addInitialNodeParameters("name", "value", "LTE/Lte_logcode",
-                     ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE2);
+            //addInitialNodeParameters("name", "value", "LTE/Lte_logcode",ComparisonConstants.PICK_FROM_FILE2);
 
 
 
-            addInitialNodeParameters("name",  "value",  "WCDMA/Wcdma_logcode",
+           /* addInitialNodeParameters("name",  "value",  "WCDMA/Wcdma_logcode",
                     ComparisonConstants.KEY_VALUE, ComparisonConstants.PICK_FROM_FILE1);
 
             addInitialNodeParameters("name",  "value",  "GSM",
@@ -320,10 +312,6 @@ public class XmlMergingHelper {
         return isInitSuccess;
     }
 
-
-
-    //
-
     /**This function is used to add Initial Root attributes provided by the user to be used for
      * comparing and extracting
      *
@@ -335,20 +323,25 @@ public class XmlMergingHelper {
         mInitialParameterList.addInitialRoot(new RootElementPOJO(attributeName, mode));
     }
 
-    //This function is used to add Initial Node attributes to be used for comparing and extracting
-    private void addInitialNodeParameters(String keyChildName,String valueChildName,
-                                           String elementPath,
-                                          String nodeType, int modeOfComparison
+    //
 
+    /**
+     * This function is used to add Initial Node attributes to be used for comparing and extracting
+     * @param keyChildName - Key Child To be searched
+     * @param valueChildName - Value of Searched Key
+     * @param elementPath - Element hierarchy to be searched
+     * @param modeOfComparison - Mode of Search
+     */
+    private void addInitialNodeParameters(String keyChildName,String valueChildName,
+                                           String elementPath,int modeOfComparison
     )
     {
-
         boolean isTobeAdded = false;
         String keyChildValue="";
         String valueChildValue="";
         Element parentReferenceNode=null;
         mInitialParameterList.addInitialNodeAttribute(new NodeElementPOJO(keyChildName, keyChildValue,
-                valueChildName, valueChildValue, elementPath, parentReferenceNode, nodeType,
+                valueChildName, valueChildValue, elementPath, parentReferenceNode,
                 modeOfComparison,isTobeAdded,null,null));
 
     }
@@ -663,10 +656,9 @@ public class XmlMergingHelper {
     private void setAttribute(String attributeName, String attributeValue, Element element)
     {
         element.setAttribute("",attributeName,attributeValue);
+
     }
 
-
-    /**/
 
     /**This function will write the Nodes of both xml in final xml file on the basis of the rules specified
      * by the user. It will call other functions to get the required nodes from both the xml files,
@@ -700,11 +692,6 @@ public class XmlMergingHelper {
 
             nodeElementPOJO = initialNodes.get(count);
 
-            /*Get the element type. It can be node type if user wants to add a particular node
-            * hierarchy or key value if user wants to compare the two elements on the basis of key-
-            * value pair*/
-            mElementType=nodeElementPOJO.getElementType();
-
             /*This represents the name of key to be used*/
             mKeyChildName=nodeElementPOJO.getKeyChildName();
 
@@ -724,215 +711,78 @@ public class XmlMergingHelper {
             mParentNode=null;
             mHierarchy=null;
 
-            /*If the element type is not Node type or key value type break the loop*/
-            if(!(mElementType.equals(ComparisonConstants.NODE)||
-                    mElementType.equals(ComparisonConstants.KEY_VALUE)
-            ))
+           /*Element path consists of hierarchy separated by the deliminator. split and store
+            * it in this variable*/
+            mHierarchy=mElementPath.split(ComparisonConstants.ABSOLUTE_PATH);
+
+            //search and add the elements from root element 1
+            searchAndAddKeyValueNode(mNodeListFile1, mRootElementFile1);
+
+            //If element exists in root element 1, search elements in root element 2.
+
+            if(mIsSuccess && mNodeListFile1!=null && mNodeListFile1.size()>0)
             {
-                Log.d(TAG,"[writeNodesToXml]: break loop---- element type wrong main-----");
-                isWriteSuccess=false;
-                break OUTER_LOOP;
-            }
+                mIsSuccess =false;
+                mNodeToBeAdded=null;
+                mIndex=0;
+                mParentNode=null;
 
-            /* first of all check the element type. This can be either Node type or Key Value pair
-             * type */
-            switch (mElementType)
-            {
-                /*If the element type is Node then 3 rules can be applied. */
-                case ComparisonConstants.NODE:
+                searchAndAddKeyValueNode(mNodeListFile2, mRootElementFile2);
 
-                    /*Element path consists of hierarchy separated by the deliminator. split and store
-                    * it in this variable*/
-                    mHierarchy=mElementPath.split(ComparisonConstants.ABSOLUTE_PATH);
+                /* If element exists in both the files then compare and merge the list to get
+                    a final list*/
 
 
-                    /*If the mode of comparison or rule specified is no comparison then check for
-                    * element hierarchy in the basis of file priority*/
-                    if(mModeOfComparison==ComparisonConstants.NO_COMPARISON)
-                    {
-                        /*If the file priority is file1 check for hierarchy in root element of file 1*/
-                        if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
-                        {
-                            /* This function will search the required hierarchy in root element passed.
-                            If at least one of the hierarchy exists it will initialise mIsSuccess=true*/
-                            searchAndMergeNodeElements(rootElementFile1, rootElementFinal);
+                if(mIsSuccess && mNodeListFile2!=null && mNodeListFile2.size()>0)
+                {
+                    mIsSuccess =false;
+                    mNodeToBeAdded=null;
+                    mIndex=0;
+                    mParentNode=null;
 
-                            if(mIsSuccess){
+                    compareAndMergeKeyNode(mNodeListFile1,mNodeListFile2,mNodeListFinal);
 
-                                isWriteSuccess=true;
-                            }
-                            else
-                            {
-                                Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE1]Not found in file1---------");
-                                searchAndMergeNodeElements(rootElementFile2, rootElementFinal);
-
-                                if(mIsSuccess){
-                                    Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE1] found in file2---------");
-                                    isWriteSuccess=true;
-                                }
-                                else
-                                {
-                                    isWriteSuccess=false;
-                                    Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE2]: Not found in file 1 and then 2");
-                                    //break OUTER_LOOP;
-                                }
-
-
-                            }
-
-                        }
-                        /*If the file priority is file2 check for hierarchy in root element of file 2*/
-                        else {
-
-                            searchAndMergeNodeElements(rootElementFile2, rootElementFinal);
-
-                            if(mIsSuccess){
-
-                                isWriteSuccess=true;
-                            }
-                            else
-                            {
-                                Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE2]Not found in file2---------");
-
-                                searchAndMergeNodeElements(rootElementFile1, rootElementFinal);
-
-                                if(mIsSuccess){
-                                    Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE2] found in file1---------");
-                                    isWriteSuccess=true;
-                                }
-                                else
-                                {
-                                    isWriteSuccess=false;
-                                    Log.d(TAG,"writeNodesToXml:[NODE][NO_COMPARISON][PRIORITY_FILE2]: Not found in file 1 and then 2");
-                                   // break OUTER_LOOP;
-                                }
-
-
-                            }
-
-                        }
-
-                    }
-
-                    /*If the mode of comparison or rule specified is pick from file 1 check for the
-                    * hierarchy in the file1. If any of the element found signal success*/
-                    else if(mModeOfComparison==ComparisonConstants.PICK_FROM_FILE1)
-                    {
-                        searchAndMergeNodeElements(rootElementFile1, rootElementFinal);
-
-                        if(mIsSuccess){
-
-                            isWriteSuccess=true;
-                        }
-                        else
-                        {
-                            isWriteSuccess=false;
-                            Log.d(TAG,"writeNodesToXml:[NODE][PICK_FROM_FILE1]: break loop---------");
-                            //break OUTER_LOOP;
-                        }
-                    }
-                    /*If the mode of comparison or rule specified is pick from file 2 check for the
-                    * hierarchy in the file2. If any of the element found signal success*/
-                    else if(mModeOfComparison==ComparisonConstants.PICK_FROM_FILE2)
-                    {
-                        searchAndMergeNodeElements(rootElementFile2, rootElementFinal);
-
-                        if(mIsSuccess){
-
-                            isWriteSuccess=true;
-                        }
-                        else
-                        {
-                            isWriteSuccess=false;
-                            Log.d(TAG,"writeNodesToXml:[NODE][PICK_FROM_FILE2]: break loop---------");
-                           // break OUTER_LOOP;
-                        }
-
-                    }else{
-
-                        isWriteSuccess=false;
-                        Log.d(TAG,"writeNodesToXml:[NODE]: break loop---- element type wrong NODE-----");
-                        break OUTER_LOOP;
-
-                    }
-
-                    break;
-
-
-                /*If the element type is Key Value Pair then check for key value hierarchy in the
-                respective files. */
-                case ComparisonConstants.KEY_VALUE:
-
-                     /*Element path consists of hierarchy separated by the deliminator. split and store
-                    * it in this variable*/
-                    mHierarchy=mElementPath.split(ComparisonConstants.ABSOLUTE_PATH);
-
-                    //search and add the elements from root element 1
-                    searchAndAddKeyValueNode(mNodeListFile1, mRootElementFile1);
-
-                    //If element exists in root element 1, search elements in root element 2.
-
-                    if(mIsSuccess && mNodeListFile1!=null && mNodeListFile1.size()>0)
+                    /*After comparison if final list consists of elements then add the
+                    * elements to the final Root element*/
+                    if(mIsSuccess && mNodeListFinal!=null)
                     {
                         mIsSuccess =false;
                         mNodeToBeAdded=null;
                         mIndex=0;
                         mParentNode=null;
 
-                        searchAndAddKeyValueNode(mNodeListFile2, mRootElementFile2);
+                        if(mNodeListFinal.size()>0)
+                             addNodeElementsToFinalFile(mNodeListFinal);
 
-                        /* If element exists in both the files then compare and merge the list to get
-                            a final list*/
-
-
-                        if(mIsSuccess && mNodeListFile2!=null && mNodeListFile2.size()>0)
-                        {
-                            mIsSuccess =false;
-                            mNodeToBeAdded=null;
-                            mIndex=0;
-                            mParentNode=null;
-
-                            compareAndMergeKeyNode(mNodeListFile1,mNodeListFile2,mNodeListFinal);
-
-                            /*After comparison if final list consists of elements then add the
-                            * elements to the final Root element*/
-                            if(mIsSuccess && mNodeListFinal!=null && mNodeListFinal.size()>0)
-                            {
-                                mIsSuccess =false;
-                                mNodeToBeAdded=null;
-                                mIndex=0;
-                                mParentNode=null;
-
-                                addNodeElementsToFinalFile(mNodeListFinal,mRootElementFinal);
-
-                                /*If any of the element was added then write the file*/
-                                if(mIsSuccess)
-                                    isWriteSuccess=true;
-                            }
-                            else {
-
-                                isWriteSuccess=false;
-                                Log.d(TAG, "writeNodesToXml:[NODE]:mIsSuccess && mNodeListFinal!=null && mNodeListFinal.size()>0-----");
-                                break OUTER_LOOP;
-                            }
-                        }
                         else
-                        {
-                            isWriteSuccess=false;
-                            Log.d(TAG, "writeNodesToXml:[NODE]:mIsSuccess && mNodeListFile2!=null && mNodeListFile2.size()>0-----");
-                            break OUTER_LOOP;
-                        }
+                            mIsSuccess=true;
+
+                        /*If any of the element was added then write the file*/
+                        if(mIsSuccess)
+                            isWriteSuccess=true;
                     }
-                    else
-                    {
+                    else {
+
                         isWriteSuccess=false;
-                        Log.d(TAG, "writeNodesToXml:[NODE]:mIsSuccess && mNodeListFile1!=null && mNodeListFile1.size()>0-----");
+                        Log.d(TAG, "writeNodesToXml:[KEY_VALUE]:mIsSuccess && mNodeListFinal!=null && mNodeListFinal.size()>0-----");
                         break OUTER_LOOP;
-
                     }
-
-                    break;
+                }
+                else
+                {
+                    isWriteSuccess=false;
+                    Log.d(TAG, "writeNodesToXml:[KEY_VALUE]:mIsSuccess && mNodeListFile2!=null && mNodeListFile2.size()>0-----");
+                    break OUTER_LOOP;
+                }
             }
+            else
+            {
+                isWriteSuccess=false;
+                Log.d(TAG, "writeNodesToXml:[KEY_VALUE]:mIsSuccess && mNodeListFile1!=null && mNodeListFile1.size()>0-----");
+                break OUTER_LOOP;
+
+            }
+
 
             mHierarchy=null;
             mIndex=0;
@@ -949,59 +799,40 @@ public class XmlMergingHelper {
 
     }
 
-    /**/
+
 
     /**
      * This function will take the final node element list and final root element. It will iterate over the
      * List and will add the elements to the final root element.
+     *
       * @param nodeElementPOJOList - Final List of node elements
-     * @param rootElementFinal - Final root Element
      */
-     private void addNodeElementsToFinalFile(List<NodeElementPOJO> nodeElementPOJOList,Element rootElementFinal)
+     private void addNodeElementsToFinalFile(List<NodeElementPOJO> nodeElementPOJOList)
     {
         String elementName=nodeElementPOJOList.get(0).getElementPath();
         NodeElementPOJO nodeElement=null;
-
 
         if(elementName!=null && elementName.length()>0)
         {
             //Get the element path and split it.
             String []splitPath=elementName.split(ComparisonConstants.ABSOLUTE_PATH);
-
-            /*If the element hierarchy consists of single element then add it directly to the root.*/
-            if(splitPath.length==1)
-            {
-                for(int i=0;i<nodeElementPOJOList.size();i++)
-                {
-                    nodeElement=nodeElementPOJOList.get(i);
-                    //Here we have used the reference node to append it directly on the root element
-                    rootElementFinal.addChild(Node.ELEMENT,nodeElement.getReferenceNode());
-                    mIsSuccess=true;
-                }
-            }
-
-            /*If the element hierarchy consists of more than 1 element call the function getFinalKeyValueElement*/
-            else
-            {
-                Element parent=nodeElementPOJOList.get(0).getParentNode();
-                mHierarchy=splitPath;
-
-                //Here we have passed the parent node
-                getFinalKeyValueElement(nodeElementPOJOList, parent.getParent());
-
-                //If at least one element found then add it to the root element
-                if(mIsSuccess && mParentElement!=null)
-                {
-                    rootElementFinal.addChild(Node.ELEMENT,mParentElement);
-                }
-            }
+              mHierarchy=splitPath;
+             getFinalKeyValueElement(nodeElementPOJOList, mRootElementFinal);
 
         }
 
     }
+
     /* This function is used for getting final parent element that consists of key value pair
         elements*/
-    private void getFinalKeyValueElement(List<NodeElementPOJO> nodeElementPOJOList, Node parentNodeElement)
+
+    /**
+     *
+     * @param nodeElementPOJOList - List containing key value pair elements to be added
+     * @param parentNodeElement - Parent node in which elements will be searched from the list and
+     *                          added accordingly
+     */
+    private void getFinalKeyValueElement(List<NodeElementPOJO> nodeElementPOJOList, Element parentNodeElement)
     {
         for (int i=0;i<parentNodeElement.getChildCount();i++)
         {
@@ -1025,23 +856,32 @@ public class XmlMergingHelper {
                         if (nodeElementPOJO.isToBeAdded()) {
                             if ((childElement.getElement("", nodeElementPOJO.getKeyChildName()) != null) &&
                                     (childElement.getElement("", nodeElementPOJO.getValueChildName()) != null)) {
-
+                                mainParent=parentNodeElement;
                                 String keyValue = childElement.getElement("", nodeElementPOJO.getKeyChildName()).getText(0);
                                 String valueValue = childElement.getElement("", nodeElementPOJO.getValueChildName()).getText(0);
 
                                 if ((keyValue != null && keyValue.length() > 0) && (valueValue != null && valueValue.length() > 0)) {
                                     if (keyValue.equals(nodeElementPOJO.getKeyChildValue())) {
 
-                                        nodeElementPOJO.setToBeAdded(false);
-                                        isElementFound=true;
-                                        break INNER_LOOP;
-                                    } else {
+                                        if(valueValue!=(nodeElementPOJO.getValueChildValue()))
+                                        {
 
-                                        //nodeElementPOJO.setToBeAdded(false);
-                                        //parentNodeElement.addChild(Node.ELEMENT,nodeElementPOJO.getNodeItself());
+                                            parentNodeElement.removeChild(i);
+                                            parentNodeElement.addChild(Node.ELEMENT,nodeElementPOJO.getNodeItself());
+                                            nodeElementPOJO.setToBeAdded(false);
+                                            isElementFound=true;
+                                            mIsSuccess = true;
+                                            break INNER_LOOP;
+
+                                        }
+                                        else
+                                        {
+                                            nodeElementPOJO.setToBeAdded(false);
+                                            isElementFound=true;
+                                            mIsSuccess = true;
+                                            break INNER_LOOP;
+                                        }
                                     }
-
-                                    mIsSuccess = true;
                                 }
 
                             }
@@ -1060,55 +900,35 @@ public class XmlMergingHelper {
 
         }
 
-    }
-    /*This function is used for searching a particular node element hierarchy in root element. If one of
-    * such hierarchy exists then set variable mIsSuccess to true that will be used by the calling function
-    * to write the final xml file. The function will be used only for Node case elements.*/
-    private void searchAndMergeNodeElements(Element rootElement, Element finalElement)
-    {
-       /*Iterate the loop over root element child*/
-        for(int j=0;j<rootElement.getChildCount();j++)
+        if(nodeElementPOJOList.size()>0)
         {
-            /*Get the child element*/
-            Element childElement=rootElement.getElement(j);
+            boolean isElementFound=false;
 
-            /*If child element is not null and the name of child element is same as that of name
-            in mHierarchy*/
-            if( childElement!=null && (mHierarchy[mIndex].equals(childElement.getName())))
+            if(mainParent!=null)
             {
-                /*If the element found is first one in hierarchy then that will be parent element
-                * Store it. If the whole search is successful then this whole element will be
-                * added to the final root element passed*/
-                if(mIndex==0)
-                {
-                    mNodeToBeAdded=childElement;
-                }
-
-                /*If we have successfully reached to the last element then add the parent element
-                * previously stored to the final root element*/
-                if(mIndex==mHierarchy.length-1)
-                {
-                    mIsSuccess =true;
-                    finalElement.addChild(org.kxml2.kdom.Node.ELEMENT,mNodeToBeAdded);
-                    mNodeToBeAdded=null;
-                    mIndex=0;
-
-                }
-                /*Iterate the function till we have not reached the final element*/
-                else
-                {
-                    mIndex++;
-                    searchAndMergeNodeElements(childElement, finalElement);
-                }
+               for(NodeElementPOJO node:nodeElementPOJOList)
+               {
+                   mainParent.addChild(Node.ELEMENT,node.getNodeItself());
+                   isElementFound=true;
+                   mIsSuccess = true;
+               }
             }
-
+            mainParent=null;
+            nodeElementPOJOList.clear();
         }
 
-
     }
-    /*This function will search for a key value pair hierarchy in given root element. If one of
-    * element is found then add it to the final list and set the global variable mIsSuccess true*/
-    private void searchAndAddKeyValueNode(List<NodeElementPOJO> nodeElementList, Element rootElement)
+
+
+
+
+    /**This function will search for a key value pair hierarchy in given root element. If one of
+     * element is found then add it to the final list and set the global variable mIsSuccess true
+     *
+     * @param nodeElementList - The List that will contain the searched elements
+     * @param rootElement  - The root element where search has to be performed
+     */
+     private void searchAndAddKeyValueNode(List<NodeElementPOJO> nodeElementList, Element rootElement)
     {
         /*If there is no element in the hierarchy then set the variable to signal no element
          was found */
@@ -1142,7 +962,7 @@ public class XmlMergingHelper {
                         {
                             mIsSuccess =true;
                             nodeElementList.add(new NodeElementPOJO(mKeyChildName,keyValue,mValueChildName,valueValue,
-                                    mElementPath,childElement,mElementType,mModeOfComparison,true,null,childElement));
+                                    mElementPath,childElement,mModeOfComparison,true,null,childElement));
                         }
                     }
                 }
@@ -1185,7 +1005,7 @@ public class XmlMergingHelper {
                             {
                                 mIsSuccess =true;
                                 nodeElementList.add(new NodeElementPOJO(mKeyChildName,keyValue,mValueChildName,valueValue,
-                                        mElementPath,mNodeToBeAdded,mElementType,mModeOfComparison,true,mParentNode,childElement));
+                                        mElementPath,mNodeToBeAdded,mModeOfComparison,true,mParentNode,childElement));
                             }
                         }
 
@@ -1204,19 +1024,22 @@ public class XmlMergingHelper {
 
     }
 
-
-    /*This function will be used for comparing the node list from both the files on the basis of mode
-    * of comparison and then adding the final element to the final list of elements*/
-    private boolean compareAndMergeKeyNode(List<NodeElementPOJO> nodeElementList1,
+    /**
+     * This function will be used for comparing the node list from both the files on the basis of mode
+     * of comparison and then adding the final element to the final list of elements
+     *
+      * @param nodeElementList1 - List containing elements from File 1
+     * @param nodeElementList2  - List containing elements from File 2
+     * @param nodeElementListFinal - List that will hold final compared elements
+     * @return boolean whether any of the element was compared and added
+     */
+     private boolean compareAndMergeKeyNode(List<NodeElementPOJO> nodeElementList1,
                                            List<NodeElementPOJO> nodeElementList2,
                                            List<NodeElementPOJO> nodeElementListFinal
     )
 
     {
         mIsSuccess=false;
-
-       /* NodeElementPOJO nodeListElement1=null;
-        NodeElementPOJO nodeListElement2=null;*/
 
         List<NodeElementPOJO> auxillaryList1 = new ArrayList<NodeElementPOJO>();
         NodeElementPOJO auxInnerNode = null;
@@ -1250,31 +1073,35 @@ public class XmlMergingHelper {
 
                     mode=nodeListElement1.getModeOfComparison();
 
+                    /*If the element values are also same then don't add it the final list. The elements
+                    * are already added in the final xml that were to be added on the basis of file priority*/
                     if(nodeListElement1.getValueChildValue().equals(nodeListElement2.getValueChildValue()))
                     {
-                        if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
-
-                            nodeElementListFinal.add(nodeListElement1);
-
-                        } else {
-
-                            nodeElementListFinal.add(nodeListElement2);
-                        }
                         mIsSuccess = true;
                     }
+                    /*If the values are different then check the file priority. Then select the element
+                    * from other file if the mode selected by the user is different from file mode*/
                     else
                     {
-                        switch (mode)
+                        switch (mFileParameterPOJO.getFilePriority())
                         {
-                            case ComparisonConstants.PICK_FROM_FILE1:
+                            case ComparisonConstants.PRIORITY_FILE1:
 
-                                nodeElementListFinal.add(nodeListElement1);
+                                if(mode == ComparisonConstants.PICK_FROM_FILE2)
+                                {
+                                    nodeElementListFinal.add(nodeListElement2);
+                                }
+
                                 mIsSuccess=true;
                                 break;
 
-                            case ComparisonConstants.PICK_FROM_FILE2:
+                            case ComparisonConstants.PRIORITY_FILE2:
 
-                                nodeElementListFinal.add(nodeListElement2);
+                                if(mode == ComparisonConstants.PICK_FROM_FILE1)
+                                {
+                                    nodeElementListFinal.add(nodeListElement1);
+                                }
+
                                 mIsSuccess=true;
                                 break;
 
@@ -1282,9 +1109,7 @@ public class XmlMergingHelper {
 
                                 mIsSuccess=false;
                                 Log.d(TAG,"[compareAndMergeKeyNode]:default case.");
-                                break OUTER_LOOP;
-
-
+                                return mIsSuccess;
                         }
                     }
 
@@ -1292,8 +1117,7 @@ public class XmlMergingHelper {
                     auxInnerNode = nodeListElement2;
                     break INNER_LOOP;
                 }
-
-            } //Endof INNER_LOOP
+            }
 
             if(elementFound) {
                 auxillaryList1.add(nodeListElement1);
@@ -1301,148 +1125,12 @@ public class XmlMergingHelper {
             }
 
 
-
-
-        }//Endof OUTER_LOOP
-
+        }
+       /*This piece of code will add the uncommon elements from both the lists to the final list*/
         nodeElementList1.removeAll(auxillaryList1);
         nodeElementListFinal.addAll(nodeElementList1);
         nodeElementListFinal.addAll(nodeElementList2);
-
-
-
-                    /*switch (mode)
-                    {
-                        case ComparisonConstants.NO_COMPARISON:
-
-                            if(mFileParameterPOJO.getFilePriority()==ComparisonConstants.PRIORITY_FILE1)
-                            {
-                                nodeElementListFinal.add(nodeListElement1);
-                            }
-                            else
-                            {
-                                nodeElementListFinal.add(nodeListElement2);
-                            }
-
-                            mIsSuccess=true;
-
-
-                            break;
-
-                        case ComparisonConstants.COMPARE_GREATER_FILE1:
-
-                            if (compareAttributeValues(nodeListElement1.getValueChildValue(), nodeListElement2.getValueChildValue(),
-                                    ComparisonConstants.COMPARE_GREATER_FILE1)) {
-
-                                nodeElementListFinal.add(nodeListElement1);
-                                mIsSuccess=true;
-                            }
-                            else
-                            {
-                                nodeListElement1.setToBeAdded(false);
-                                nodeElementListFinal.add(nodeListElement1);
-                            }
-
-                            break;
-
-                        case ComparisonConstants.COMPARE_GREATER_FILE2:
-
-                            if (compareAttributeValues(nodeListElement1.getValueChildValue(), nodeListElement2.getValueChildValue(),
-                                    ComparisonConstants.COMPARE_GREATER_FILE2)) {
-
-
-                                nodeElementListFinal.add(nodeListElement2);
-                                mIsSuccess=true;
-                            }
-                            else
-                            {
-                                nodeListElement2.setToBeAdded(false);
-                                nodeElementListFinal.add(nodeListElement2);
-                            }
-
-                            break;
-
-                        case ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1:
-
-                            if (compareAttributeValues(nodeListElement1.getValueChildValue(), nodeListElement2.getValueChildValue(),
-                                    ComparisonConstants.COMPARE_GREATER_EQUAL_FILE1)) {
-
-                                nodeElementListFinal.add(nodeListElement1);
-
-                                mIsSuccess=true;
-
-                            }
-                            else
-                            {
-                                nodeListElement1.setToBeAdded(false);
-                                nodeElementListFinal.add(nodeListElement1);
-                            }
-                            break;
-
-                        case ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2:
-
-                            if (compareAttributeValues(nodeListElement1.getValueChildValue(), nodeListElement2.getValueChildValue(),
-                                    ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2)) {
-
-                                nodeElementListFinal.add(nodeListElement2);
-
-
-                                mIsSuccess=true;
-                            }
-                            else
-                            {
-                                nodeListElement2.setToBeAdded(false);
-                                nodeElementListFinal.add(nodeListElement2);
-                            }
-
-                            break;
-
-                        case ComparisonConstants.PICK_FROM_FILE1:
-
-                            nodeElementListFinal.add(nodeListElement1);
-
-                            mIsSuccess=true;
-
-                            break;
-
-                        case ComparisonConstants.PICK_FROM_FILE2:
-
-                            nodeElementListFinal.add(nodeListElement2);
-
-                            mIsSuccess=true;
-
-                            break;
-
-                        case ComparisonConstants.COMPARE_EQUAL:
-
-                            if((nodeListElement1.getKeyChildName().equalsIgnoreCase(nodeListElement2.getKeyChildName()))
-                                    &&(nodeListElement1.getKeyChildValue().equalsIgnoreCase(nodeListElement2.getKeyChildValue())))
-                            {
-                                if (compareAttributeValues(nodeListElement1.getValueChildValue(), nodeListElement2.getValueChildValue(),
-                                        ComparisonConstants.COMPARE_EQUAL)) {
-
-                                    if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
-                                        nodeElementListFinal.add(nodeListElement1);
-
-                                    } else {
-                                        nodeElementListFinal.add(nodeListElement2);
-                                    }
-                                    mIsSuccess = true;
-                                } else {
-                                    if (mFileParameterPOJO.getFilePriority() == ComparisonConstants.PRIORITY_FILE1) {
-                                        nodeListElement1.setToBeAdded(false);
-                                        nodeElementListFinal.add(nodeListElement1);
-
-                                    } else {
-                                        nodeListElement2.setToBeAdded(false);
-                                        nodeElementListFinal.add(nodeListElement2);
-                                    }
-                                }
-                            }
-
-                            break;
-                    }*/
-
+        mIsSuccess=true;
 
 
         return mIsSuccess;
@@ -1450,12 +1138,19 @@ public class XmlMergingHelper {
     }
 
 
-    /*This function will compare the two attribute values on the basis of comparison type and
-    * will the return the boolean result*/
+
+    /**
+     * *This function will compare the two attribute values on the basis of comparison type and
+    * will the return the boolean result
+    *
+      * @param attrValue1 - Attribute Value 1
+     * @param attrValue2 - Attribute Value 2
+     * @param comparisonType - Comparison Type
+     * @return - Boolean telling whether comparison was successful pr not
+     */
     private boolean compareAttributeValues(String attrValue1,String attrValue2,int comparisonType)
     {
         boolean result=false;
-
 
         switch (comparisonType)
         {

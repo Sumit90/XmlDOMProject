@@ -38,42 +38,36 @@ public class WriteXmlFile {
     //Parameterised constructor to set and get ParameterList object
     public WriteXmlFile(FileParameterPOJO fileParameterPOJO)
     {
-
         this.fileParameterPOJO=fileParameterPOJO;
         document= new Document();
 
     }
-    //This function is used for creating Root element
-    public boolean createDocRootElement(String rootElementName)
+
+    /**
+     * This Function will be used to add Root Element to the final document
+     * @param finalRootElement - Final root element to be added
+     * @return- boolean stating whether addition of final root element was successful or not
+     */
+    public boolean addRootElementToDocument(Element finalRootElement)
     {
         boolean isSuccessElement=false;
-
         if(document!=null) {
-            docRootElement = document.createElement("", rootElementName);
-            document.addChild(Node.ELEMENT, docRootElement);
+            document.addChild(Node.ELEMENT, finalRootElement);
             isSuccessElement=true;
         }
 
         return isSuccessElement;
-
-    }
-    //This function is used for obtaining Root element
-    public Element getDocRootElement()
-    {
-        if (docRootElement!=null)
-        {
-            return docRootElement;
-        }
-
-        return null;
     }
 
-  //This function is used for writing the final Xml file.
+
+    /**
+     * This function is used for writing the final XML file from the document element
+     * @throws IOException
+     */
     public void WriteXml() throws IOException
     {
-            if (docRootElement != null ) {
+            if (document != null ) {
                 XmlSerializer xmlWriter = new KXmlSerializer();
-                if (fileParameterPOJO.isWriteXml()) {
 
                     File sdCardPathDirectory = createNewDirectory(fileParameterPOJO.getFinalFilePath());
 
@@ -102,15 +96,15 @@ public class WriteXmlFile {
                         Log.d(TAG, "-----cannot write.Sdcard not available-----");
                     }
 
-                } else {
 
-                    Log.d(TAG, "-----write xml boolean not true-----");
-
-                }
             }
         }
 
-
+    /**
+     * This is a helper method that is used to create a directory
+     * @param createNewFolder - Final path where directory has to be created
+     * @return File object containing created directory
+     */
     private File createNewDirectory(String createNewFolder) {
 
         // make directory
@@ -124,9 +118,7 @@ public class WriteXmlFile {
             }
             return NewDirectory;
         }
-
         return NewDirectory;
     }
-
 
 }

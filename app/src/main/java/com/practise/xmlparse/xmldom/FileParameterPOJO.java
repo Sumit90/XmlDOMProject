@@ -11,16 +11,20 @@ public class FileParameterPOJO {
     private int filePriority; //This will store the file priority
     private String finalFileName; //This will store the final file name
     private String finalFilePath; // This will store the final file path
-    private boolean isWriteXml; //This boolean will decide whether final xml file has to be write or not.
 
-    public FileParameterPOJO( int filePriority, String finalFileName, String finalFilePath,
-                              boolean isWriteXml)
+    /**
+     * Parameterised constructor to create FileParameterPOJO object
+     * @param filePriority  - whether file1 has more priority or file 2
+     * @param finalFileName - Name of the final merged file
+     * @param finalFilePath - Path where final merged file will be saved
+     */
+    public FileParameterPOJO( int filePriority, String finalFileName, String finalFilePath)
 
     {
         this.filePriority=filePriority;
         this.finalFileName=finalFileName;
         this.finalFilePath=finalFilePath;
-        this.isWriteXml=isWriteXml;
+
 
     }
 
@@ -39,7 +43,5 @@ public class FileParameterPOJO {
         return finalFilePath;
     }
 
-    public boolean isWriteXml() {
-        return isWriteXml;
-    }
+
 }

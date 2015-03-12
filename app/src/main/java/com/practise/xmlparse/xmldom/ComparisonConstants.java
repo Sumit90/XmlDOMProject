@@ -49,15 +49,6 @@ public interface ComparisonConstants {
     /*Constant used to tell that File 2 is of higher priority */
     public static final int PRIORITY_FILE2 =9;
 
-    /*Constant to denote that a element is a Node element*/
-    public static final String NODE="N";
-
-    /*Constant to denote that a element is for key value search.*/
-    public static final String KEY_VALUE="KV";
-
-
-
-
 
 
 }

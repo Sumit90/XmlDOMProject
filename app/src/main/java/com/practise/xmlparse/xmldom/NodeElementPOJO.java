@@ -13,14 +13,26 @@ public class NodeElementPOJO {
     private String valueChildValue; // This will store the value value
     private String elementPath; //This will store the complete element hierarchy not including root
     private Element referenceNode; //This will contain the reference node
-    private String elementType; // This will contain the element type
     private int modeOfComparison; // This will contain the mode of comparison
     private boolean isToBeAdded;  //This boolean will tell whether the key value element has to be removed
     private Element parentNode;  // This will store the parent node
-    private Element nodeItself;  // This will store the parent node
+    private Element nodeItself;  // This will store the node itself
 
+    /**
+     * Constructor to create NodeElement
+     * @param keyChildName - This will store the key name
+     * @param keyChildValue - This will store the key value
+     * @param valueChildName - This will store the value name
+     * @param valueChildValue - This will store the value value
+     * @param parentReferenceAddress -This will store the complete element hierarchy not including root
+     * @param referenceNode -  This will contain the reference node
+     * @param modeOfComparison - This will contain the mode of comparison
+     * @param isToBeAdded -This boolean will tell whether the key value element has been added
+     * @param parentNode - This will store the parent node
+     * @param nodeItself - This will store the node itself
+     */
     NodeElementPOJO(String keyChildName, String keyChildValue, String valueChildName, String valueChildValue,
-                    String parentReferenceAddress, Element referenceNode, String elementType,
+                    String parentReferenceAddress, Element referenceNode,
                     int modeOfComparison,boolean isToBeAdded,Element parentNode,Element nodeItself)
     {
         this.keyChildName=keyChildName;
@@ -29,7 +41,6 @@ public class NodeElementPOJO {
         this.valueChildValue=valueChildValue;
         this.elementPath =parentReferenceAddress;
         this.referenceNode =referenceNode;
-        this.elementType =elementType;
         this.modeOfComparison=modeOfComparison;
         this.isToBeAdded=isToBeAdded;
         this.parentNode=parentNode;
@@ -82,14 +93,6 @@ public class NodeElementPOJO {
 
     public void setReferenceNode(Element referenceNode) {
         this.referenceNode = referenceNode;
-    }
-
-    public String getElementType() {
-        return elementType;
-    }
-
-    public void setElementType(String elementType) {
-        this.elementType = elementType;
     }
 
     public int getModeOfComparison() {
