@@ -139,7 +139,7 @@ public class XmlMergingHelper {
                             {
                                 Log.d(TAG, "---------- check writeNodesToXml()-------------");
 
-                                if (writeNodesToXml(mRootElementFile1, mRootElementFile2, mRootElementFinal))
+                                if (writeNodesToXml())
                                 {
                                     mWriteFile.WriteXml();
                                 }
@@ -212,20 +212,8 @@ public class XmlMergingHelper {
      *  7)COMPARE_GREATER_EQUAL_FILE2
      *  8)NO_COMPARISON
      *
-     *  Permissible element type that can be applied for Node Type for Inner elements
-     * 1)NODE
-     * 2)KEY_VALUE
      *
-     * Permissible Rules that can be applied for element type NODE
-     * 1)PICK_FROM_FILE1
-     * 2)PICK_FROM_FILE2
-     * 3)NO_COMPARISON
-     *
-     * Permissible Rules that can be applied for element type KEY_VALUE
-     * 1)PICK_FROM_FILE1
-     * 2)PICK_FROM_FILE2
-     * 3)NO_COMPARISON
-     *
+
      * @param inputStreamFile1-Input Stream from Sdcard File
      * @param inputStreamFile2-Input Stream from Assets File
      * @return boolean indicating whether initialisation was successful
@@ -253,8 +241,9 @@ public class XmlMergingHelper {
             addInitialRootParameters("@version",ComparisonConstants.COMPARE_GREATER_EQUAL_FILE2);
             addInitialRootParameters("@name",ComparisonConstants.NO_COMPARISON);
 
-            addInitialNodeParameters("name", "value", "LTE/Lte_logcode",ComparisonConstants.PICK_FROM_FILE1);
-            addInitialNodeParameters("name", "value", "WCDMA/Wcdma_logcode",ComparisonConstants.PICK_FROM_FILE2);
+            addInitialNodeParameters("name", "value", "LTE/LTE_LOGCODE",ComparisonConstants.PICK_FROM_FILE1);
+           // addInitialNodeParameters("name", "value1", "LTE/LTE_LOGCODE",ComparisonConstants.PICK_FROM_FILE2);
+            //addInitialNodeParameters("name", "value", "WCDMA/Wcdma_logcode",ComparisonConstants.PICK_FROM_FILE2);
 
             //addInitialNodeParameters("name", "value", "LTE/Lte_logcode",ComparisonConstants.PICK_FROM_FILE2);
 
@@ -665,12 +654,10 @@ public class XmlMergingHelper {
      * compare the attributes to create a final list of nodes and then adding the nodes to the final xml
      * file.
      *
-     * @param rootElementFile1 - Root element from File1
-     * @param rootElementFile2 - Root element from File2
-     * @param rootElementFinal - Root element for final File
+     *
      * @return boolean variable indicating whether comparing and merging was successful or not
      */
-     private boolean writeNodesToXml(Element rootElementFile1,Element rootElementFile2,Element rootElementFinal)
+     private boolean writeNodesToXml()
     {
         boolean isWriteSuccess=false;
 
@@ -823,10 +810,11 @@ public class XmlMergingHelper {
 
     }
 
-    /* This function is used for getting final parent element that consists of key value pair
-        elements*/
+    /* */
 
     /**
+     *This function is used for appending key value pair elements to the final element at appropriate
+     * hierarchy
      *
      * @param nodeElementPOJOList - List containing key value pair elements to be added
      * @param parentNodeElement - Parent node in which elements will be searched from the list and
@@ -867,7 +855,8 @@ public class XmlMergingHelper {
                                         {
 
                                             parentNodeElement.removeChild(i);
-                                            parentNodeElement.addChild(Node.ELEMENT,nodeElementPOJO.getNodeItself());
+                                            //parentNodeElement.addChild(Node.ELEMENT,nodeElementPOJO.getNodeItself());
+                                            parentNodeElement.addChild(i,Node.ELEMENT,nodeElementPOJO.getNodeItself());
                                             nodeElementPOJO.setToBeAdded(false);
                                             isElementFound=true;
                                             mIsSuccess = true;
@@ -902,21 +891,17 @@ public class XmlMergingHelper {
 
         if(nodeElementPOJOList.size()>0)
         {
-            boolean isElementFound=false;
-
             if(mainParent!=null)
             {
                for(NodeElementPOJO node:nodeElementPOJOList)
                {
                    mainParent.addChild(Node.ELEMENT,node.getNodeItself());
-                   isElementFound=true;
                    mIsSuccess = true;
                }
             }
             mainParent=null;
             nodeElementPOJOList.clear();
         }
-
     }
 
 
